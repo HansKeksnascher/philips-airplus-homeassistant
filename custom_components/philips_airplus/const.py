@@ -60,8 +60,35 @@ PRESET_MODE_SLEEP = "sleep"
 PRESET_MODE_TURBO = "turbo"
 PRESET_MODE_MANUAL = "manual"
 
+
+class FanSpeed:
+    """Fan speed values for the device."""
+
+    SILENT = 1
+    MEDIUM = 2
+    TURBO = 3
+
+    NAME_TO_VALUE: dict[str, int] = {
+        "silent": 1,
+        "gentle": 1,
+        "low": 1,
+        "speed1": 1,
+        "medium": 2,
+        "speed2": 2,
+        "high": 3,
+        "turbo": 3,
+        "speed3": 3,
+    }
+
+    VALUE_TO_NAME: dict[int, str] = {
+        1: "Silent",
+        2: "Medium",
+        3: "Turbo",
+    }
+
 # Properties
 PROP_FAN_SPEED = "fan_speed"
+PROP_FAN_SPEED_RAW = "D0310C"
 PROP_MODE = "mode"
 PROP_POWER_FLAG = "power"
 
@@ -90,7 +117,12 @@ CONF_CLIENT_ID = "client_id"
 CONF_TOKEN_EXPIRES_AT = "token_expires_at"
 DEFAULT_CLIENT_ID = "-XsK7O6iEkLml77yDGDUi0ku"
 # OAuth client secret (used for BasicAuth in token requests)
-OAUTH_CLIENT_SECRET = "philips_airplus_secret"
+OAUTH_CLIENT_SECRET = "V34BlAhuilIdOx0Imo16rGQ2"
+
+# Configuration endpoint for IoT
+API_CONFIG_URL = "https://prod.global-da.iot.versuni.com/configuration"
+API_AIR_HOST = "air.prod.eu-da.iot.versuni.com"
+API_AIR_BASE_URL = f"https://{API_AIR_HOST}/api"
 # Integration-level enable/disable flag
 CONF_ENABLE_MQTT = "enable_mqtt"
 
