@@ -89,6 +89,8 @@ CONF_USER_ID = "user_id"
 CONF_CLIENT_ID = "client_id"
 CONF_TOKEN_EXPIRES_AT = "token_expires_at"
 DEFAULT_CLIENT_ID = "-XsK7O6iEkLml77yDGDUi0ku"
+# OAuth client secret (used for BasicAuth in token requests)
+OAUTH_CLIENT_SECRET = "philips_airplus_secret"
 # Integration-level enable/disable flag
 CONF_ENABLE_MQTT = "enable_mqtt"
 

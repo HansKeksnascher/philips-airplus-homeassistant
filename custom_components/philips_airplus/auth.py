@@ -13,6 +13,8 @@ from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from typing import Any
 
+import aiohttp
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -22,6 +24,7 @@ from .const import (
     OIDC_DEFAULT_REDIRECT_URI,
     OIDC_DEFAULT_SCOPES,
     OIDC_DEFAULT_TENANT_SEGMENT,
+    OAUTH_CLIENT_SECRET,
     SIGNATURE_ENDPOINT,
     TOKEN_REFRESH_BUFFER,
     USER_SELF_ENDPOINT,
@@ -136,13 +139,13 @@ class PhilipsAirplusOAuth2Implementation:
         data = {
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
-            "client_id": self.client_id,
         }
 
         session = async_get_clientsession(self.hass)
         async with session.post(
             self.token_url,
             data=data,
+            auth=aiohttp.BasicAuth(self._client_id or "", OAUTH_CLIENT_SECRET),
             headers={
                 "Content-Type": "application/x-www-form-urlencoded",
                 "User-Agent": HTTP_USER_AGENT,

@@ -5,7 +5,6 @@ import asyncio
 import json
 import logging
 import random
-import ssl
 import string
 import threading
 import time
@@ -193,10 +192,7 @@ class PhilipsAirplusMQTTClient:
 
             self._client.ws_set_options(path=MQTT_PATH, headers=headers)
 
-            try:
-                self._client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
-            except Exception as tls_ex:
-                _LOGGER.warning("Failed to set TLSv1.2: %s", tls_ex)
+            self._client.tls_set()
 
             self._client.on_connect = self._on_connect
             self._client.on_message = self._on_message
