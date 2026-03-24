@@ -61,12 +61,14 @@ SENSOR_DESCRIPTIONS: list[SensorEntityDescription] = [
     SensorEntityDescription(
         key="pm25",
         translation_key="pm25",
+        name="PM2.5",
         native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         icon="mdi:air-filter",
     ),
     SensorEntityDescription(
         key="indoor_air_index",
         translation_key="indoor_air_index",
+        name="Indoor Air Index",
         icon="mdi:air-humidifier",
     ),
 ]
