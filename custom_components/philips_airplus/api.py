@@ -245,8 +245,11 @@ def build_client_id(user_id: str, device_uuid: str) -> str:
     """Build composite client ID for MQTT connection."""
     import re
 
-    # Remove da- prefix if present
-    if device_uuid.startswith("da-"):
+    # Track if device_uuid had da- prefix
+    has_da_prefix = device_uuid.startswith("da-")
+    
+    # Remove da- prefix if present for UUID validation
+    if has_da_prefix:
         device_uuid = device_uuid[3:]
 
     user_id = user_id.strip()
@@ -257,10 +260,12 @@ def build_client_id(user_id: str, device_uuid: str) -> str:
     )
 
     if uuid_re.match(user_id) and uuid_re.match(device_uuid):
-        composite = f"{user_id}_{device_uuid}"
-        if len(composite) != 73:
+        # Restore da- prefix for composite ID
+        device_with_prefix = f"da-{device_uuid}"
+        composite = f"{user_id}_{device_with_prefix}"
+        if len(composite) != 76:  # 36 + 1 + 3 + 36 = 76
             _LOGGER.warning(
-                "Composite client ID length %s (expected 73): %s",
+                "Composite client ID length %s (expected 76): %s",
                 len(composite),
                 composite,
             )
@@ -270,10 +275,11 @@ def build_client_id(user_id: str, device_uuid: str) -> str:
     hex32_re = re.compile(r"^[0-9a-f]{32}$", re.IGNORECASE)
     if hex32_re.match(user_id) and uuid_re.match(device_uuid):
         user_id_formatted = f"{user_id[0:8]}-{user_id[8:12]}-{user_id[12:16]}-{user_id[16:20]}-{user_id[20:32]}"
-        composite = f"{user_id_formatted}_{device_uuid}"
-        if len(composite) != 73:
+        device_with_prefix = f"da-{device_uuid}"
+        composite = f"{user_id_formatted}_{device_with_prefix}"
+        if len(composite) != 76:
             _LOGGER.warning(
-                "Reconstructed composite client ID length %s (expected 73): %s",
+                "Reconstructed composite client ID length %s (expected 76): %s",
                 len(composite),
                 composite,
             )
