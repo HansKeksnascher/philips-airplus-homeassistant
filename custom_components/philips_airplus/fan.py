@@ -1,4 +1,5 @@
 """Fan entity for Philips Air+ integration."""
+
 from __future__ import annotations
 
 import logging
@@ -46,10 +47,10 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
     _attr_translation_key = "fan"
     _attr_force_update = True
     _attr_supported_features = (
-        FanEntityFeature.SET_SPEED |
-        FanEntityFeature.PRESET_MODE |
-        FanEntityFeature.TURN_ON |
-        FanEntityFeature.TURN_OFF
+        FanEntityFeature.SET_SPEED
+        | FanEntityFeature.PRESET_MODE
+        | FanEntityFeature.TURN_ON
+        | FanEntityFeature.TURN_OFF
     )
 
     def __init__(
@@ -170,7 +171,9 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
         idx = max(0, min(idx, len(supported_speeds) - 1))
 
         target_speed = supported_speeds[idx]
-        _LOGGER.debug("Mapped percentage %s to speed value %s", percentage, target_speed)
+        _LOGGER.debug(
+            "Mapped percentage %s to speed value %s", percentage, target_speed
+        )
 
         success = await self.coordinator.set_fan_speed(target_speed)
 

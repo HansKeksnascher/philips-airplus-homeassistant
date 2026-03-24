@@ -14,17 +14,16 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import aiohttp
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     HTTP_USER_AGENT,
+    OAUTH_CLIENT_SECRET,
     OIDC_DEFAULT_ISSUER_BASE,
     OIDC_DEFAULT_REDIRECT_URI,
     OIDC_DEFAULT_SCOPES,
     OIDC_DEFAULT_TENANT_SEGMENT,
-    OAUTH_CLIENT_SECRET,
     SIGNATURE_ENDPOINT,
     TOKEN_REFRESH_BUFFER,
     USER_SELF_ENDPOINT,
@@ -331,16 +330,24 @@ class PhilipsAirplusAuth:
 
         async with session.get(SIGNATURE_ENDPOINT, headers=headers) as response:
             if response.status == 401:
-                raise AuthenticationExpired("Signature endpoint returned 401 - token may be invalid")
+                raise AuthenticationExpired(
+                    "Signature endpoint returned 401 - token may be invalid"
+                )
             if response.status != 200:
                 text = await response.text()
-                raise RuntimeError(f"Failed to fetch signature: {response.status} - {text}")
+                raise RuntimeError(
+                    f"Failed to fetch signature: {response.status} - {text}"
+                )
             data: dict[str, Any] = await response.json()
             signature: str | None = data.get("signature")
             if signature is None:
-                raise RuntimeError("Signature endpoint returned 200 but missing 'signature' field")
+                raise RuntimeError(
+                    "Signature endpoint returned 200 but missing 'signature' field"
+                )
             if not isinstance(signature, str) or not signature.strip():
-                raise RuntimeError(f"Signature endpoint returned invalid signature: {signature}")
+                raise RuntimeError(
+                    f"Signature endpoint returned invalid signature: {signature}"
+                )
             return signature
 
     async def close(self) -> None:

@@ -1,4 +1,5 @@
 """Button entities for Philips Air+ integration."""
+
 from __future__ import annotations
 
 import logging
@@ -37,7 +38,9 @@ class _PhilipsAirplusBaseButton(CoordinatorEntity, ButtonEntity):
     _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.CONFIG
 
-    def __init__(self, coordinator: PhilipsAirplusDataCoordinator, entry: ConfigEntry) -> None:
+    def __init__(
+        self, coordinator: PhilipsAirplusDataCoordinator, entry: ConfigEntry
+    ) -> None:
         super().__init__(coordinator)
         self.coordinator: PhilipsAirplusDataCoordinator = coordinator
         self.entry = entry
@@ -57,25 +60,35 @@ class PhilipsAirplusResetFilterCleanButton(_PhilipsAirplusBaseButton):
     _attr_icon = "mdi:air-filter"
     _attr_translation_key = "reset_filter_clean"
 
-    def __init__(self, coordinator: PhilipsAirplusDataCoordinator, entry: ConfigEntry) -> None:
+    def __init__(
+        self, coordinator: PhilipsAirplusDataCoordinator, entry: ConfigEntry
+    ) -> None:
         super().__init__(coordinator, entry)
         self._attr_unique_id = f"{entry.data['device_uuid']}_reset_filter_clean"
 
     async def async_press(self) -> None:
         ok = await self.coordinator.reset_filter_clean()
         if not ok:
-            _LOGGER.warning("Failed to reset clean filter timer for %s", self.entry.data.get("device_name"))
+            _LOGGER.warning(
+                "Failed to reset clean filter timer for %s",
+                self.entry.data.get("device_name"),
+            )
 
 
 class PhilipsAirplusResetFilterReplaceButton(_PhilipsAirplusBaseButton):
     _attr_icon = "mdi:air-filter"
     _attr_translation_key = "reset_filter_replace"
 
-    def __init__(self, coordinator: PhilipsAirplusDataCoordinator, entry: ConfigEntry) -> None:
+    def __init__(
+        self, coordinator: PhilipsAirplusDataCoordinator, entry: ConfigEntry
+    ) -> None:
         super().__init__(coordinator, entry)
         self._attr_unique_id = f"{entry.data['device_uuid']}_reset_filter_replace"
 
     async def async_press(self) -> None:
         ok = await self.coordinator.reset_filter_replace()
         if not ok:
-            _LOGGER.warning("Failed to reset replace filter timer for %s", self.entry.data.get("device_name"))
+            _LOGGER.warning(
+                "Failed to reset replace filter timer for %s",
+                self.entry.data.get("device_name"),
+            )

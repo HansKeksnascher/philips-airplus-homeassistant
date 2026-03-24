@@ -166,7 +166,12 @@ class PhilipsAirplusDevice:
 
     def _extract_type(self) -> str:
         """Extract device type."""
-        return self._data.get("type") or self._data.get("deviceType") or self._data.get("ctn") or "unknown"
+        return (
+            self._data.get("type")
+            or self._data.get("deviceType")
+            or self._data.get("ctn")
+            or "unknown"
+        )
 
     @property
     def uuid(self) -> str:
@@ -247,7 +252,7 @@ def build_client_id(user_id: str, device_uuid: str) -> str:
 
     # Track if device_uuid had da- prefix
     has_da_prefix = device_uuid.startswith("da-")
-    
+
     # Remove da- prefix if present for UUID validation
     if has_da_prefix:
         device_uuid = device_uuid[3:]

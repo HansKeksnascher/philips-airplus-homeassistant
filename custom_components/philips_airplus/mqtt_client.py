@@ -1,4 +1,5 @@
 """MQTT client for Philips Air+ integration."""
+
 from __future__ import annotations
 
 import asyncio
@@ -48,7 +49,7 @@ class PhilipsAirplusMQTTClient:
     ) -> None:
         """Initialize MQTT client."""
         self.device_id = device_id
-        if not self.device_id.startswith('da-'):
+        if not self.device_id.startswith("da-"):
             self.device_id = f"da-{self.device_id}"
         self.access_token = access_token
         self.signature = signature
@@ -68,7 +69,9 @@ class PhilipsAirplusMQTTClient:
         self._message_callback: Callable[[dict[str, Any]], None] | None = None
         self._connection_callback: Callable[[bool], None] | None = None
         self._last_nonzero_speed: int = 8
-        self._refreshing_credentials: bool = False  # Flag to maintain availability during credential refresh
+        self._refreshing_credentials: bool = (
+            False  # Flag to maintain availability during credential refresh
+        )
 
         self.outbound_topic = TOPIC_CONTROL_TEMPLATE.format(device_id=self.device_id)
         self.inbound_topic = TOPIC_STATUS_TEMPLATE.format(device_id=self.device_id)
@@ -84,15 +87,17 @@ class PhilipsAirplusMQTTClient:
     def _build_headers(self) -> dict[str, str]:
         """Build WebSocket headers for authentication."""
         return {
-            'x-amz-customauthorizer-name': self.custom_authorizer_name,
-            'x-amz-customauthorizer-signature': self.signature,
-            'tenant': 'da',
-            'content-type': 'application/json',
-            'token-header': f'Bearer {self.access_token.strip()}',
-            'Sec-WebSocket-Protocol': 'mqtt',
+            "x-amz-customauthorizer-name": self.custom_authorizer_name,
+            "x-amz-customauthorizer-signature": self.signature,
+            "tenant": "da",
+            "content-type": "application/json",
+            "token-header": f"Bearer {self.access_token.strip()}",
+            "Sec-WebSocket-Protocol": "mqtt",
         }
 
-    def _on_connect(self, client: mqtt.Client, userdata: Any, flags: dict[str, Any], rc: int) -> None:
+    def _on_connect(
+        self, client: mqtt.Client, userdata: Any, flags: dict[str, Any], rc: int
+    ) -> None:
         """Handle MQTT connection."""
         _LOGGER.info("Connected to MQTT with rc=%s", rc)
 
@@ -116,7 +121,7 @@ class PhilipsAirplusMQTTClient:
     def _on_message(self, client: mqtt.Client, userdata: Any, msg: MQTTMessage) -> None:
         """Handle incoming MQTT messages."""
         try:
-            payload = msg.payload.decode('utf-8')
+            payload = msg.payload.decode("utf-8")
             message_data = json.loads(payload)
 
             _LOGGER.debug("Received message: %s", message_data)
@@ -168,7 +173,10 @@ class PhilipsAirplusMQTTClient:
             # Apply backoff if recent disconnect
             if self._last_disconnect_time and self._last_disconnect_rc != 0:
                 elapsed = time.time() - self._last_disconnect_time
-                backoff = min(self._reconnect_base * (2 ** max(0, self._reconnect_attempts - 1)), self._reconnect_max_backoff)
+                backoff = min(
+                    self._reconnect_base * (2 ** max(0, self._reconnect_attempts - 1)),
+                    self._reconnect_max_backoff,
+                )
                 if elapsed < backoff:
                     wait = backoff - elapsed
                     _LOGGER.warning("Throttling reconnect for %.1fs", wait)
@@ -176,18 +184,22 @@ class PhilipsAirplusMQTTClient:
 
             # Special cooldown for rc=7
             if self._last_disconnect_rc == 7:
-                elapsed_since = time.time() - self._last_disconnect_time if self._last_disconnect_time else None
+                elapsed_since = (
+                    time.time() - self._last_disconnect_time
+                    if self._last_disconnect_time
+                    else None
+                )
                 if elapsed_since is not None and elapsed_since < self._rc7_cooldown:
                     wait = self._rc7_cooldown - elapsed_since
-                    _LOGGER.warning("Recent rc=7 disconnect; enforcing cooldown for %.1fs", wait)
+                    _LOGGER.warning(
+                        "Recent rc=7 disconnect; enforcing cooldown for %.1fs", wait
+                    )
                     time.sleep(wait)
 
             headers = self._build_headers()
 
             self._client = mqtt.Client(
-                client_id=self.client_id,
-                transport='websockets',
-                protocol=mqtt.MQTTv311
+                client_id=self.client_id, transport="websockets", protocol=mqtt.MQTTv311
             )
 
             self._client.ws_set_options(path=MQTT_PATH, headers=headers)
@@ -198,7 +210,12 @@ class PhilipsAirplusMQTTClient:
             self._client.on_message = self._on_message
             self._client.on_disconnect = self._on_disconnect
 
-            _LOGGER.debug("Connecting to %s:%s with client_id=%s", MQTT_HOST, MQTT_PORT, self.client_id)
+            _LOGGER.debug(
+                "Connecting to %s:%s with client_id=%s",
+                MQTT_HOST,
+                MQTT_PORT,
+                self.client_id,
+            )
             self._client.connect(MQTT_HOST, MQTT_PORT, keepalive=KEEPALIVE)
             self._client.loop_start()
 
@@ -275,31 +292,25 @@ class PhilipsAirplusMQTTClient:
 
     def _generate_correlation_id(self) -> str:
         """Generate a correlation ID for commands."""
-        return ''.join(random.choices(string.hexdigits.lower(), k=8))
+        return "".join(random.choices(string.hexdigits.lower(), k=8))
 
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""
-        return datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+        return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
     def _build_command_payload(
-        self,
-        command_name: str,
-        port_name: str,
-        properties: dict[str, Any]
+        self, command_name: str, port_name: str, properties: dict[str, Any]
     ) -> str:
         """Build command payload."""
         payload = {
-            'cid': self._generate_correlation_id(),
-            'time': self._get_timestamp(),
-            'type': 'command',
-            'cn': command_name,
-            'ct': 'mobile',
-            'data': {
-                'portName': port_name,
-                'properties': properties
-            }
+            "cid": self._generate_correlation_id(),
+            "time": self._get_timestamp(),
+            "type": "command",
+            "cn": command_name,
+            "ct": "mobile",
+            "data": {"portName": port_name, "properties": properties},
         }
-        return json.dumps(payload, separators=(',', ':'))
+        return json.dumps(payload, separators=(",", ":"))
 
     def set_fan_speed(self, speed: int, raw_key: str = PROP_FAN_SPEED) -> bool:
         """Set fan speed using raw property key."""
@@ -307,11 +318,7 @@ class PhilipsAirplusMQTTClient:
             _LOGGER.error("MQTT not connected")
             return False
 
-        payload = self._build_command_payload(
-            'setPort',
-            PORT_CONTROL,
-            {raw_key: speed}
-        )
+        payload = self._build_command_payload("setPort", PORT_CONTROL, {raw_key: speed})
 
         _LOGGER.debug("Setting fan speed to %s using key %s", speed, raw_key)
 
@@ -333,11 +340,7 @@ class PhilipsAirplusMQTTClient:
             _LOGGER.error("MQTT not connected")
             return False
 
-        payload = self._build_command_payload(
-            'setPort',
-            PORT_CONTROL,
-            {raw_key: mode}
-        )
+        payload = self._build_command_payload("setPort", PORT_CONTROL, {raw_key: mode})
 
         _LOGGER.debug("Setting mode to %s using key %s", mode, raw_key)
         success = self._publish(payload)
@@ -349,7 +352,12 @@ class PhilipsAirplusMQTTClient:
 
         return success
 
-    def set_power(self, power_on: bool, raw_speed_key: str = PROP_FAN_SPEED, raw_power_key: str | None = None) -> bool:
+    def set_power(
+        self,
+        power_on: bool,
+        raw_speed_key: str = PROP_FAN_SPEED,
+        raw_power_key: str | None = None,
+    ) -> bool:
         """Set power state."""
         if not self._connected:
             _LOGGER.error("MQTT not connected")
@@ -357,9 +365,11 @@ class PhilipsAirplusMQTTClient:
 
         power_val = 1 if power_on else 0
         desired = {"state": {"desired": {"powerOn": True if power_val == 1 else False}}}
-        shadow_payload = json.dumps(desired, separators=(',', ':'))
+        shadow_payload = json.dumps(desired, separators=(",", ":"))
 
-        success = self._publish(shadow_payload, topic=f"$aws/things/{self.device_id}/shadow/update")
+        success = self._publish(
+            shadow_payload, topic=f"$aws/things/{self.device_id}/shadow/update"
+        )
 
         if success:
             # Force immediate status update to reflect change in HA
@@ -374,7 +384,7 @@ class PhilipsAirplusMQTTClient:
             return False
 
         payload = self._build_command_payload(
-            'setPort',
+            "setPort",
             PORT_FILTER_WRITE,
             {PROP_FILTER_CLEAN_RESET_RAW: 720},
         )
@@ -401,7 +411,7 @@ class PhilipsAirplusMQTTClient:
             return False
 
         payload = self._build_command_payload(
-            'setPort',
+            "setPort",
             PORT_FILTER_WRITE,
             {PROP_FILTER_REPLACE_RESET_RAW: 4800},
         )
@@ -427,11 +437,7 @@ class PhilipsAirplusMQTTClient:
             _LOGGER.error("MQTT not connected")
             return False
 
-        payload = self._build_command_payload(
-            'getPort',
-            port_name,
-            {}
-        )
+        payload = self._build_command_payload("getPort", port_name, {})
 
         _LOGGER.debug("Requesting status for port %s", port_name)
         return self._publish(payload)
@@ -442,11 +448,7 @@ class PhilipsAirplusMQTTClient:
             _LOGGER.error("MQTT not connected")
             return False
 
-        payload = self._build_command_payload(
-            'getAllPorts',
-            '',
-            {}
-        )
+        payload = self._build_command_payload("getAllPorts", "", {})
 
         _LOGGER.debug("Requesting status for all ports")
         return self._publish(payload)
@@ -459,7 +461,7 @@ class PhilipsAirplusMQTTClient:
 
         shadow_topic = f"$aws/things/{self.device_id}/shadow/get"
         _LOGGER.debug("Requesting shadow get")
-        return self._publish('{}', topic=shadow_topic)
+        return self._publish("{}", topic=shadow_topic)
 
     def _publish(self, payload: str, topic: str | None = None, qos: int = 0) -> bool:
         """Publish message to MQTT broker."""
@@ -471,11 +473,15 @@ class PhilipsAirplusMQTTClient:
             publish_topic = topic or self.outbound_topic
             result = self._client.publish(publish_topic, payload, qos=qos)
 
-            if getattr(result, 'rc', None) == mqtt.MQTT_ERR_SUCCESS:
+            if getattr(result, "rc", None) == mqtt.MQTT_ERR_SUCCESS:
                 _LOGGER.debug("Published to %s: %s", publish_topic, payload)
                 return True
             else:
-                _LOGGER.error("Failed to publish to %s: rc=%s", publish_topic, getattr(result, 'rc', None))
+                _LOGGER.error(
+                    "Failed to publish to %s: rc=%s",
+                    publish_topic,
+                    getattr(result, "rc", None),
+                )
                 return False
 
         except Exception as ex:

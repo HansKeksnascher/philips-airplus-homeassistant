@@ -1,4 +1,5 @@
 """Philips Air+ integration for Home Assistant."""
+
 from __future__ import annotations
 
 import logging
@@ -45,7 +46,7 @@ def _normalize_device_uuid(device_uuid: str) -> str:
 def _iter_coordinators(hass: HomeAssistant) -> list[PhilipsAirplusDataCoordinator]:
     coordinators: list[PhilipsAirplusDataCoordinator] = []
     for entry in hass.config_entries.async_entries(DOMAIN):
-        if hasattr(entry, 'runtime_data'):
+        if hasattr(entry, "runtime_data"):
             coordinators.append(entry.runtime_data)
     return coordinators
 
@@ -60,7 +61,11 @@ async def _handle_reset_service(call: ServiceCall, service_name: str) -> None:
         coordinators = [c for c in coordinators if c.device_uuid == target_uuid]
 
     if not coordinators:
-        _LOGGER.info("Service %s: no matching devices (device_uuid=%s)", service_name, target_uuid)
+        _LOGGER.info(
+            "Service %s: no matching devices (device_uuid=%s)",
+            service_name,
+            target_uuid,
+        )
         return
 
     for coordinator in coordinators:
@@ -71,9 +76,19 @@ async def _handle_reset_service(call: ServiceCall, service_name: str) -> None:
                 ok = await coordinator.reset_filter_replace()
 
             if ok:
-                _LOGGER.info("Service %s succeeded for %s (%s)", service_name, coordinator.device_name, coordinator.device_uuid)
+                _LOGGER.info(
+                    "Service %s succeeded for %s (%s)",
+                    service_name,
+                    coordinator.device_name,
+                    coordinator.device_uuid,
+                )
             else:
-                _LOGGER.warning("Service %s failed for %s (%s)", service_name, coordinator.device_name, coordinator.device_uuid)
+                _LOGGER.warning(
+                    "Service %s failed for %s (%s)",
+                    service_name,
+                    coordinator.device_name,
+                    coordinator.device_uuid,
+                )
         except Exception as exc:
             _LOGGER.exception(
                 "Service %s errored for %s (%s): %s",
@@ -121,23 +136,36 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Integration-level option to disable MQTT entirely
         enable_mqtt = entry.options.get(CONF_ENABLE_MQTT, True)
         if not enable_mqtt:
-            _LOGGER = __import__('logging').getLogger(__name__)
-            _LOGGER.info("Config entry %s: enable_mqtt is False; skipping MQTT setup.", entry.entry_id)
+            _LOGGER = __import__("logging").getLogger(__name__)
+            _LOGGER.info(
+                "Config entry %s: enable_mqtt is False; skipping MQTT setup.",
+                entry.entry_id,
+            )
             return True
         if entries:
             # If every entry is disabled by the user, skip setup
             # Some HA versions do not export DISABLED_USER; compare against literal 'user'
-            all_disabled = all((e.disabled_by is not None and str(e.disabled_by).lower() == 'user') for e in entries)
+            all_disabled = all(
+                (e.disabled_by is not None and str(e.disabled_by).lower() == "user")
+                for e in entries
+            )
             if all_disabled:
-                _LOGGER = __import__('logging').getLogger(__name__)
-                _LOGGER.info("All entities for config_entry %s are disabled by user; skipping setup.", entry.entry_id)
+                _LOGGER = __import__("logging").getLogger(__name__)
+                _LOGGER.info(
+                    "All entities for config_entry %s are disabled by user; skipping setup.",
+                    entry.entry_id,
+                )
                 return True
         else:
             # No entity entries yet; initial setup or entities removed — proceed only if enable_mqtt True
-            _LOGGER = __import__('logging').getLogger(__name__)
-            _LOGGER.debug("No registered entities for config_entry %s; proceeding (enable_mqtt=%s).", entry.entry_id, enable_mqtt)
+            _LOGGER = __import__("logging").getLogger(__name__)
+            _LOGGER.debug(
+                "No registered entities for config_entry %s; proceeding (enable_mqtt=%s).",
+                entry.entry_id,
+                enable_mqtt,
+            )
     except Exception as exc:
-        _LOGGER = __import__('logging').getLogger(__name__)
+        _LOGGER = __import__("logging").getLogger(__name__)
         _LOGGER.debug("Entity registry check failed: %s; proceeding with setup.", exc)
 
     coordinator = PhilipsAirplusDataCoordinator(hass, entry)
@@ -146,7 +174,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await coordinator.async_setup()
         await coordinator.async_config_entry_first_refresh()
     except Exception as ex:
-        raise ConfigEntryNotReady(f"Unable to connect to Philips Air+ device: {ex}") from ex
+        raise ConfigEntryNotReady(
+            f"Unable to connect to Philips Air+ device: {ex}"
+        ) from ex
 
     entry.runtime_data = coordinator
 
