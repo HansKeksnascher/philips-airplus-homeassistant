@@ -30,6 +30,8 @@ from .const import (
     PROP_FILTER_REPLACE_RESET_RAW,
     PROP_MODE,
     TOPIC_CONTROL_TEMPLATE,
+    TOPIC_SHADOW_GET_ACCEPTED_TEMPLATE,
+    TOPIC_SHADOW_GET_REJECTED_TEMPLATE,
     TOPIC_SHADOW_UPDATE_TEMPLATE,
     TOPIC_STATUS_TEMPLATE,
 )
@@ -118,6 +120,14 @@ class PhilipsAirplusMQTTClient:
             shadow_topic = TOPIC_SHADOW_UPDATE_TEMPLATE.format(device_id=self.device_id)
             client.subscribe(shadow_topic, qos=0)
             _LOGGER.info("Subscribed to %s", shadow_topic)
+
+            shadow_get_accepted_topic = TOPIC_SHADOW_GET_ACCEPTED_TEMPLATE.format(device_id=self.device_id)
+            client.subscribe(shadow_get_accepted_topic, qos=0)
+            _LOGGER.info("Subscribed to %s", shadow_get_accepted_topic)
+
+            shadow_get_rejected_topic = TOPIC_SHADOW_GET_REJECTED_TEMPLATE.format(device_id=self.device_id)
+            client.subscribe(shadow_get_rejected_topic, qos=0)
+            _LOGGER.info("Subscribed to %s", shadow_get_rejected_topic)
 
             if self._connection_callback:
                 self._connection_callback(True)

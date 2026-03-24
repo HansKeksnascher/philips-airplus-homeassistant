@@ -233,7 +233,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 raise UpdateFailed("Failed to connect to MQTT")
 
             # Request initial device status
-            await asyncio.sleep(1)  # Give MQTT connection time to establish
+            await asyncio.sleep(2)  # Give MQTT connection and subscriptions time to establish
             # Schedule initial status request (it is now async)
             self.hass.async_create_task(self._request_initial_status())
 
@@ -258,13 +258,15 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             minutes=5
         ):
             self._last_full_request = now
+            # Request shadow state first to get current device state
+            self._mqtt_client.request_shadow_get()
+            await asyncio.sleep(0.5)
+            # Then request port status for additional data
             self._mqtt_client.request_port_status(PORT_STATUS)
             await asyncio.sleep(0.1)
             self._mqtt_client.request_port_status(PORT_CONFIG)
             await asyncio.sleep(0.1)
             self._mqtt_client.request_port_status(PORT_FILTER_READ)
-            await asyncio.sleep(0.1)
-            self._mqtt_client.request_shadow_get()
         else:
             # Only request Status port for lightweight refresh
             self._mqtt_client.request_port_status(PORT_STATUS)

@@ -104,6 +104,10 @@ TOPIC_CONTROL_TEMPLATE = "da_ctrl/{device_id}/to_ncp"
 TOPIC_STATUS_TEMPLATE = "da_ctrl/{device_id}/from_ncp"
 TOPIC_SHADOW_UPDATE_TEMPLATE = "$aws/things/{device_id}/shadow/update"
 TOPIC_SHADOW_GET_TEMPLATE = "$aws/things/{device_id}/shadow/get"
+TOPIC_SHADOW_GET_ACCEPTED_TEMPLATE = "$aws/things/{device_id}/shadow/get/accepted"
+TOPIC_SHADOW_GET_REJECTED_TEMPLATE = "$aws/things/{device_id}/shadow/get/rejected"
+TOPIC_SHADOW_UPDATE_ACCEPTED_TEMPLATE = "$aws/things/{device_id}/shadow/update/accepted"
+TOPIC_SHADOW_UPDATE_REJECTED_TEMPLATE = "$aws/things/{device_id}/shadow/update/rejected"
 
 # Configuration keys
 CONF_ACCESS_TOKEN = "access_token"
