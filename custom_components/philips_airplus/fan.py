@@ -86,6 +86,10 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
     @property
     def is_on(self) -> bool:
         """Return True if the fan is on."""
+        power_on = self.coordinator.shadow_state.get("powerOn")
+        if power_on is not None:
+            return bool(power_on)
+
         power = self._get_device_property(PROP_POWER_FLAG)
         if power is not None and int(power) == 0:
             return False

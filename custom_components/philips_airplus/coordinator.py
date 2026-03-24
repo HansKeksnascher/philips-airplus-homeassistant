@@ -97,6 +97,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         # Device state
         self._device_state: dict[str, Any] = {}
+        self._shadow_state: dict[str, Any] = {}
         self._filter_data: dict[str, Any] = {}
 
         # Model config will be loaded after async_load_models() is called
@@ -155,6 +156,11 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def device_state(self) -> dict[str, Any]:
         """Get device state."""
         return self._device_state
+
+    @property
+    def shadow_state(self) -> dict[str, Any]:
+        """Get shadow state."""
+        return self._shadow_state
 
     @property
     def filter_data(self) -> dict[str, Any]:
@@ -220,6 +226,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Set up MQTT callbacks
             self._mqtt_client.set_message_callback(self._on_mqtt_message)
             self._mqtt_client.set_connection_callback(self._on_mqtt_connection)
+            self._mqtt_client.set_shadow_callback(self._on_shadow_message)
 
             # Connect to MQTT asynchronously (avoid blocking loop)
             if not await self._mqtt_client.async_connect():
@@ -330,6 +337,44 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # This runs in the MQTT client thread, so we must schedule the update
         # on the main event loop to safely interact with HA.
         self.hass.loop.call_soon_threadsafe(self._on_mqtt_message_in_loop, message_data)
+
+    def _on_shadow_message(self, message_data: dict[str, Any]) -> None:
+        """Handle incoming shadow state messages."""
+        self.hass.loop.call_soon_threadsafe(self._on_shadow_message_in_loop, message_data)
+
+    def _on_shadow_message_in_loop(self, message_data: dict[str, Any]) -> None:
+        """Handle incoming shadow state messages (in event loop)."""
+        try:
+            state = message_data.get("state", {})
+            desired = state.get("desired", {})
+            reported = state.get("reported", {})
+            delta = state.get("delta", {})
+
+            if desired:
+                self._shadow_state.update(desired)
+                _LOGGER.debug("Shadow desired state updated: %s", desired)
+            if reported:
+                self._shadow_state.update(reported)
+                _LOGGER.debug("Shadow reported state updated: %s", reported)
+            if delta:
+                self._shadow_state.update(delta)
+                _LOGGER.debug("Shadow delta state updated: %s", delta)
+
+            # Trigger coordinator update so entities refresh state in HA
+            self.async_set_updated_data(
+                {
+                    "device_state": self._device_state,
+                    "shadow_state": self._shadow_state,
+                    "filter_data": self._filter_data,
+                    "filter_info": self._get_filter_info() or {},
+                    "air_quality_info": self._get_air_quality_info() or {},
+                    "connected": self._connected,
+                    "last_update": datetime.now(),
+                }
+            )
+
+        except Exception as ex:
+            _LOGGER.error("Error processing shadow message: %s", ex)
 
     def _on_mqtt_message_in_loop(self, message_data: dict[str, Any]) -> None:
         """Handle incoming MQTT messages (in event loop)."""

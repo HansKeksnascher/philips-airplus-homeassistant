@@ -68,6 +68,7 @@ class PhilipsAirplusMQTTClient:
         self._lock = threading.Lock()
         self._message_callback: Callable[[dict[str, Any]], None] | None = None
         self._connection_callback: Callable[[bool], None] | None = None
+        self._shadow_callback: Callable[[dict[str, Any]], None] | None = None
         self._last_nonzero_speed: int = 8
         self._refreshing_credentials: bool = (
             False  # Flag to maintain availability during credential refresh
@@ -83,6 +84,10 @@ class PhilipsAirplusMQTTClient:
     def set_connection_callback(self, callback: Callable[[bool], None]) -> None:
         """Set callback for connection status changes."""
         self._connection_callback = callback
+
+    def set_shadow_callback(self, callback: Callable[[dict[str, Any]], None]) -> None:
+        """Set callback for shadow state updates."""
+        self._shadow_callback = callback
 
     def _build_headers(self) -> dict[str, str]:
         """Build WebSocket headers for authentication."""
@@ -109,6 +114,10 @@ class PhilipsAirplusMQTTClient:
             client.subscribe(self.inbound_topic, qos=0)
             _LOGGER.info("Subscribed to %s", self.inbound_topic)
 
+            shadow_topic = TOPIC_SHADOW_UPDATE_TEMPLATE.format(device_id=self.device_id)
+            client.subscribe(shadow_topic, qos=0)
+            _LOGGER.info("Subscribed to %s", shadow_topic)
+
             if self._connection_callback:
                 self._connection_callback(True)
         else:
@@ -124,9 +133,12 @@ class PhilipsAirplusMQTTClient:
             payload = msg.payload.decode("utf-8")
             message_data = json.loads(payload)
 
-            _LOGGER.debug("Received message: %s", message_data)
+            _LOGGER.debug("Received message on %s: %s", msg.topic, message_data)
 
-            if self._message_callback:
+            if msg.topic and "shadow" in msg.topic:
+                if self._shadow_callback:
+                    self._shadow_callback(message_data)
+            elif self._message_callback:
                 self._message_callback(message_data)
 
         except json.JSONDecodeError as ex:
