@@ -14,6 +14,9 @@ dev = [
     "pytest-homeassistant-custom-component>=0.13.0",
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "homeassistant>=2024.6.0",
 ]
 
 [tool.pytest.ini_options]
@@ -21,7 +24,7 @@ minversion = "8.0"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 pythonpath = ["."]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --cov=custom_components.philips_airplus --cov-report=term-missing"
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
