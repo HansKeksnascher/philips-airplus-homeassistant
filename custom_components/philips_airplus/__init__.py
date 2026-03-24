@@ -164,7 +164,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if coordinator:
         await coordinator.async_shutdown()
 
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    unload_ok: bool = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     return unload_ok
 

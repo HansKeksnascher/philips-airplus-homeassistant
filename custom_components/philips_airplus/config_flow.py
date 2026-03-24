@@ -37,7 +37,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg]
     """Handle a config flow for Philips Air+."""
 
     VERSION = 1
