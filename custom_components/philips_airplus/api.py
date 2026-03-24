@@ -144,6 +144,8 @@ class PhilipsAirplusAPIClient:
 class PhilipsAirplusDevice:
     """Representation of a Philips Air+ device."""
 
+    __slots__ = ("_data", "_uuid", "_name", "_type")
+
     def __init__(self, device_data: dict[str, Any]) -> None:
         """Initialize device."""
         self._data = device_data

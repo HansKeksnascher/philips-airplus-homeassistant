@@ -136,7 +136,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Integration-level option to disable MQTT entirely
         enable_mqtt = entry.options.get(CONF_ENABLE_MQTT, True)
         if not enable_mqtt:
-            _LOGGER = __import__("logging").getLogger(__name__)
             _LOGGER.info(
                 "Config entry %s: enable_mqtt is False; skipping MQTT setup.",
                 entry.entry_id,
@@ -150,7 +149,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 for e in entries
             )
             if all_disabled:
-                _LOGGER = __import__("logging").getLogger(__name__)
                 _LOGGER.info(
                     "All entities for config_entry %s are disabled by user; skipping setup.",
                     entry.entry_id,
@@ -158,14 +156,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 return True
         else:
             # No entity entries yet; initial setup or entities removed — proceed only if enable_mqtt True
-            _LOGGER = __import__("logging").getLogger(__name__)
             _LOGGER.debug(
                 "No registered entities for config_entry %s; proceeding (enable_mqtt=%s).",
                 entry.entry_id,
                 enable_mqtt,
             )
     except Exception as exc:
-        _LOGGER = __import__("logging").getLogger(__name__)
         _LOGGER.debug("Entity registry check failed: %s; proceeding with setup.", exc)
 
     coordinator = PhilipsAirplusDataCoordinator(hass, entry)

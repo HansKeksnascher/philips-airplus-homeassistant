@@ -33,9 +33,6 @@ MQTT_PORT = 443
 MQTT_PATH = "/mqtt"
 KEEPALIVE = 4
 
-# Authentication
-AUTH_MODE_OAUTH = "oauth"
-# Authentication
 AUTH_MODE_OAUTH = "oauth"
 
 

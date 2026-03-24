@@ -8,7 +8,6 @@ import logging
 import re
 import secrets
 import urllib.parse
-import urllib.request
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from typing import Any

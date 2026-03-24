@@ -30,6 +30,7 @@ from .const import (
     PROP_FILTER_REPLACE_RESET_RAW,
     PROP_MODE,
     TOPIC_CONTROL_TEMPLATE,
+    TOPIC_SHADOW_UPDATE_TEMPLATE,
     TOPIC_STATUS_TEMPLATE,
 )
 
@@ -390,7 +391,10 @@ class PhilipsAirplusMQTTClient:
         return success
 
     def reset_filter_clean(self) -> bool:
-        """Reset clean-filter maintenance timer (matches official app MQTT publish)."""
+        """Reset clean-filter maintenance timer (matches official app MQTT publish).
+
+        Resets the filter cleaning timer to 720 hours (30 days).
+        """
         if not self._connected:
             _LOGGER.error("MQTT not connected")
             return False
@@ -398,7 +402,7 @@ class PhilipsAirplusMQTTClient:
         payload = self._build_command_payload(
             "setPort",
             PORT_FILTER_WRITE,
-            {PROP_FILTER_CLEAN_RESET_RAW: 720},
+            {PROP_FILTER_CLEAN_RESET_RAW: 720},  # 720 hours = 30 days
         )
 
         _LOGGER.debug("Resetting clean-filter maintenance timer")
@@ -417,7 +421,10 @@ class PhilipsAirplusMQTTClient:
         return success
 
     def reset_filter_replace(self) -> bool:
-        """Reset replace-filter maintenance timer (matches official app MQTT publish)."""
+        """Reset replace-filter maintenance timer (matches official app MQTT publish).
+
+        Resets the filter replacement timer to 4800 hours (200 days).
+        """
         if not self._connected:
             _LOGGER.error("MQTT not connected")
             return False
@@ -425,7 +432,7 @@ class PhilipsAirplusMQTTClient:
         payload = self._build_command_payload(
             "setPort",
             PORT_FILTER_WRITE,
-            {PROP_FILTER_REPLACE_RESET_RAW: 4800},
+            {PROP_FILTER_REPLACE_RESET_RAW: 4800},  # 4800 hours = 200 days
         )
 
         _LOGGER.debug("Resetting replace-filter maintenance timer")
