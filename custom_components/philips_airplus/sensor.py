@@ -5,7 +5,6 @@ import logging
 from typing import Any
 
 from homeassistant.components.sensor import (
-    SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
 )
@@ -33,7 +32,6 @@ SENSOR_DESCRIPTIONS: list[SensorEntityDescription] = [
         key="filter_replace_percentage",
         translation_key="filter_replace_percentage",
         entity_category=EntityCategory.DIAGNOSTIC,
-        device_class=SensorDeviceClass.POWER_FACTOR,
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:air-filter",
     ),
@@ -41,7 +39,6 @@ SENSOR_DESCRIPTIONS: list[SensorEntityDescription] = [
         key="filter_replace_hours_remaining",
         translation_key="filter_replace_hours_remaining",
         entity_category=EntityCategory.DIAGNOSTIC,
-        device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.HOURS,
         icon="mdi:air-filter",
     ),
@@ -49,7 +46,6 @@ SENSOR_DESCRIPTIONS: list[SensorEntityDescription] = [
         key="filter_clean_percentage",
         translation_key="filter_clean_percentage",
         entity_category=EntityCategory.DIAGNOSTIC,
-        device_class=SensorDeviceClass.POWER_FACTOR,
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:air-filter",
     ),
@@ -57,7 +53,6 @@ SENSOR_DESCRIPTIONS: list[SensorEntityDescription] = [
         key="filter_clean_hours_remaining",
         translation_key="filter_clean_hours_remaining",
         entity_category=EntityCategory.DIAGNOSTIC,
-        device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.HOURS,
         icon="mdi:air-filter",
     ),
