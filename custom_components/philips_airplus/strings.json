@@ -2,24 +2,24 @@
   "entity": {
     "sensor": {
       "filter_replace_percentage": {
-        "name": "Filter Replace"
+        "name": "Filter Replacement"
       },
       "filter_replace_hours_remaining": {
-        "name": "Filter Replace Hours Remaining"
+        "name": "Filter Replacement Hours Remaining"
       },
       "filter_clean_percentage": {
-        "name": "Filter Clean"
+        "name": "Filter Cleaning"
       },
       "filter_clean_hours_remaining": {
-        "name": "Filter Clean Hours Remaining"
+        "name": "Filter Cleaning Hours Remaining"
       }
     },
     "button": {
       "reset_filter_clean": {
-        "name": "Reset Clean Filter"
+        "name": "Reset Filter Cleaning"
       },
       "reset_filter_replace": {
-        "name": "Reset Replace Filter"
+        "name": "Reset Filter Replacement"
       }
     },
     "fan": {
