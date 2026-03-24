@@ -23,6 +23,10 @@ class PhilipsAirplusAPIError(Exception):
     """Exception for Philips Air+ API errors."""
 
 
+class PhilipsAirplusAuthError(PhilipsAirplusAPIError):
+    """Exception for authentication failures (HTTP 401/403)."""
+
+
 class PhilipsAirplusAPIClient:
     """API client for Philips Air+."""
 
@@ -59,6 +63,9 @@ class PhilipsAirplusAPIClient:
             async with session.get(
                 url, headers=headers, timeout=aiohttp.ClientTimeout(total=timeout)
             ) as response:
+                if response.status == 401 or response.status == 403:
+                    text = await response.text()
+                    raise PhilipsAirplusAuthError(f"HTTP {response.status}: {text}")
                 if response.status != 200:
                     text = await response.text()
                     raise PhilipsAirplusAPIError(f"HTTP {response.status}: {text}")
@@ -67,6 +74,10 @@ class PhilipsAirplusAPIClient:
                 _LOGGER.debug("API response from %s: %s", url, data)
                 return data
 
+        except PhilipsAirplusAuthError:
+            raise
+        except PhilipsAirplusAPIError:
+            raise
         except aiohttp.ClientError as ex:
             raise PhilipsAirplusAPIError(f"Network error: {ex}") from ex
         except json.JSONDecodeError as ex:

@@ -14,7 +14,7 @@ from homeassistant.const import CONF_ACCESS_TOKEN
 from homeassistant.data_entry_flow import FlowResult
 
 from .auth import PhilipsAirplusAuth
-from .api import PhilipsAirplusAPIClient, PhilipsAirplusDevice
+from .api import PhilipsAirplusAPIClient, PhilipsAirplusDevice, PhilipsAirplusAPIError, PhilipsAirplusAuthError
 from .auth import PhilipsAirplusOAuth2Implementation
 from .const import (
     AUTH_MODE_OAUTH,
@@ -190,6 +190,28 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             return await self.async_step_select_device()
 
+        except PhilipsAirplusAuthError as ex:
+            _LOGGER.warning("Authentication failed during OAuth: %s", ex)
+            errors["base"] = "invalid_token"
+            return self.async_show_form(
+                step_id="oauth",
+                data_schema=vol.Schema({vol.Required("auth_code"): str}),
+                errors=errors,
+                description_placeholders={
+                    "instructions": getattr(self, "_oauth_instructions", "")
+                },
+            )
+        except PhilipsAirplusAPIError as ex:
+            _LOGGER.warning("Connection failed during OAuth: %s", ex)
+            errors["base"] = "cannot_connect"
+            return self.async_show_form(
+                step_id="oauth",
+                data_schema=vol.Schema({vol.Required("auth_code"): str}),
+                errors=errors,
+                description_placeholders={
+                    "instructions": getattr(self, "_oauth_instructions", "")
+                },
+            )
         except Exception as ex:
             _LOGGER.exception("OAuth step failed: %s", ex)
             errors["base"] = "unknown"
@@ -439,6 +461,20 @@ class PhilipsAirplusOptionsFlowHandler(config_entries.OptionsFlow):
                 )
                 _LOGGER.info(
                     "Options re-authentication succeeded and entry was reloaded"
+                )
+            except PhilipsAirplusAuthError as ex:
+                _LOGGER.warning("Options re-auth failed - invalid token: %s", ex)
+                return await self._async_show_init_form(
+                    enable_mqtt,
+                    auth_code="",
+                    errors={"base": "invalid_token"},
+                )
+            except PhilipsAirplusAPIError as ex:
+                _LOGGER.warning("Options re-auth failed - connection error: %s", ex)
+                return await self._async_show_init_form(
+                    enable_mqtt,
+                    auth_code="",
+                    errors={"base": "cannot_connect"},
                 )
             except Exception as ex:
                 _LOGGER.exception("Options re-authentication failed: %s", ex)
