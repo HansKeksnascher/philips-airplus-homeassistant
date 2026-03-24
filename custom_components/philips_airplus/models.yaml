@@ -7,9 +7,8 @@ models:
   "AC0650/10":
     name: "Philips Air+ AC0650/10"
     modes:
-      Auto: 1
       Sleep: 17
-      Medium: 3
+      Medium: 0
       Turbo: 18
     speeds: [17, 3, 18]
     protocol:
@@ -40,9 +39,9 @@ models:
   "AC0651/10":
     name: "Philips Air+ AC0651/10"
     modes:
-      Auto: 1
+      Auto: 3
       Sleep: 17
-      Medium: 3
+      Medium: 1
       Turbo: 18
     speeds: [1, 2, 3, 18]
     protocol:
