@@ -39,26 +39,28 @@ class PhilipsAirplusModelManager:
         except Exception as ex:
             _LOGGER.error("Failed to load models.yaml: %s", ex)
 
-    def get_model_config(self, model_id: str) -> dict[str, Any]:
+    def get_model_config(self, model_id: str, detected_model_id: str | None = None) -> dict[str, Any]:
         """Get configuration for a specific model."""
         # Try exact match
         if model_id in self._models:
             model_config: dict[str, Any] = self._models[model_id]
             return model_config
 
-        # Try partial match (e.g. AC0650)
+        # Try partial match (model_id is prefix of key, e.g. "AC0651" matches "AC0651/10")
         for key, config in self._models.items():
-            if key in model_id:
+            if key.startswith(model_id) or model_id.startswith(key):
                 model_config = config
                 return model_config
 
-        # Fallback to default
-        if self._default_model and self._default_model in self._models:
-            _LOGGER.warning("Model %s not found, using default %s", model_id, self._default_model)
-            model_config = self._models[self._default_model]
-            return model_config
+        # Fallback to "unknown" model with detected ID in name
+        if "unknown" in self._models:
+            unknown_config = dict(self._models["unknown"])
+            if detected_model_id:
+                unknown_config["name"] = f"Philips Air+ {detected_model_id} (Unrecognized Model)"
+            _LOGGER.warning("Model %s not found, using unknown model config", model_id)
+            return unknown_config
 
-        _LOGGER.error("Model %s not found and no default available", model_id)
+        _LOGGER.error("Model %s not found and no fallback available", model_id)
         return {}
 
     def get_mode_value(self, model_id: str, mode_name: str) -> int | None:

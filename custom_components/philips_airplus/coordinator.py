@@ -396,7 +396,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             model = properties["ctn"]
             _LOGGER.debug("Device model reported: %s", model)
             # Update model config if it changed
-            self._model_config = self._model_manager.get_model_config(model)
+            self._model_config = self._model_manager.get_model_config(model, detected_model_id=model)
 
     def _process_filter_update(self, properties: dict[str, Any]) -> None:
         """Process filter update."""
