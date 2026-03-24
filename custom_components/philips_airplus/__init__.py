@@ -44,13 +44,10 @@ def _normalize_device_uuid(device_uuid: str) -> str:
 
 
 def _iter_coordinators(hass: HomeAssistant) -> list[PhilipsAirplusDataCoordinator]:
-    domain_data = hass.data.get(DOMAIN, {})
     coordinators: list[PhilipsAirplusDataCoordinator] = []
-    for key, value in domain_data.items():
-        if key == "_services_registered":
-            continue
-        if isinstance(value, PhilipsAirplusDataCoordinator):
-            coordinators.append(value)
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        if hasattr(entry, 'runtime_data'):
+            coordinators.append(entry.runtime_data)
     return coordinators
 
 
@@ -152,7 +149,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except Exception as ex:
         raise ConfigEntryNotReady(f"Unable to connect to Philips Air+ device: {ex}") from ex
     
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    entry.runtime_data = coordinator
 
     # Register domain services once (not per entry)
     _ensure_services_registered(hass)
@@ -164,14 +161,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    coordinator = hass.data[DOMAIN].get(entry.entry_id)
+    coordinator = entry.runtime_data
     if coordinator:
         await coordinator.async_shutdown()
     
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
     
     return unload_ok
 

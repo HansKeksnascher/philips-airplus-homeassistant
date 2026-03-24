@@ -22,7 +22,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Philips Air+ buttons."""
-    coordinator: PhilipsAirplusDataCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: PhilipsAirplusDataCoordinator = entry.runtime_data
 
     async_add_entities(
         [
