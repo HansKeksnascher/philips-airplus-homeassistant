@@ -317,7 +317,7 @@ class PhilipsAirplusAuth:
             user_id: str | None = data.get("id")
             return user_id
 
-    async def _fetch_signature(self) -> str | None:
+    async def _fetch_signature(self) -> str:
         """Fetch signature from API."""
         headers = {
             "Authorization": f"Bearer {self.access_token}",
@@ -327,10 +327,17 @@ class PhilipsAirplusAuth:
         session = async_get_clientsession(self.hass)
 
         async with session.get(SIGNATURE_ENDPOINT, headers=headers) as response:
+            if response.status == 401:
+                raise AuthenticationExpired("Signature endpoint returned 401 - token may be invalid")
             if response.status != 200:
-                raise RuntimeError(f"Failed to fetch signature: {response.status}")
+                text = await response.text()
+                raise RuntimeError(f"Failed to fetch signature: {response.status} - {text}")
             data: dict[str, Any] = await response.json()
             signature: str | None = data.get("signature")
+            if signature is None:
+                raise RuntimeError("Signature endpoint returned 200 but missing 'signature' field")
+            if not isinstance(signature, str) or not signature.strip():
+                raise RuntimeError(f"Signature endpoint returned invalid signature: {signature}")
             return signature
 
     async def close(self) -> None:

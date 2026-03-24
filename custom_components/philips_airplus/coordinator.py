@@ -193,6 +193,12 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if not await self._auth.initialize():
                 raise ConfigEntryAuthFailed("Failed to initialize authentication")
 
+            # Validate that we have a valid signature before attempting MQTT
+            if not self._auth.signature:
+                raise ConfigEntryAuthFailed(
+                    "No signature available after authentication - please re-authenticate"
+                )
+
             # Update API client with potentially refreshed token
             self._api_client = PhilipsAirplusAPIClient(self._auth.access_token or "")
 
