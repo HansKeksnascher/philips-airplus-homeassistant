@@ -5,17 +5,20 @@ from __future__ import annotations
 import logging
 import secrets
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.const import CONF_ACCESS_TOKEN
 from homeassistant.data_entry_flow import FlowResult
 
-from .auth import PhilipsAirplusAuth
-from .api import PhilipsAirplusAPIClient, PhilipsAirplusDevice, PhilipsAirplusAPIError, PhilipsAirplusAuthError
-from .auth import PhilipsAirplusOAuth2Implementation
+from .api import (
+    PhilipsAirplusAPIClient,
+    PhilipsAirplusAPIError,
+    PhilipsAirplusAuthError,
+    PhilipsAirplusDevice,
+)
+from .auth import PhilipsAirplusAuth, PhilipsAirplusOAuth2Implementation
 from .const import (
     AUTH_MODE_OAUTH,
     CONF_AUTH_MODE,
@@ -42,16 +45,16 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize the config flow."""
         self._auth_mode: str = AUTH_MODE_OAUTH
-        self._access_token: Optional[str] = None
-        self._refresh_token: Optional[str] = None
-        self._token_expires_at: Optional[int] = None
-        self._devices: List[PhilipsAirplusDevice] = []
-        self._auth: Optional[PhilipsAirplusAuth] = None
-        self._client_id: Optional[str] = None
-        self._oauth_flow_id: Optional[str] = None
-        self._oauth_authorize_url: Optional[str] = None
-        self._oauth_instructions: Optional[str] = None
-        self._reauth_entry: Optional[config_entries.ConfigEntry] = None
+        self._access_token: str | None = None
+        self._refresh_token: str | None = None
+        self._token_expires_at: int | None = None
+        self._devices: list[PhilipsAirplusDevice] = []
+        self._auth: PhilipsAirplusAuth | None = None
+        self._client_id: str | None = None
+        self._oauth_flow_id: str | None = None
+        self._oauth_authorize_url: str | None = None
+        self._oauth_instructions: str | None = None
+        self._reauth_entry: config_entries.ConfigEntry | None = None
 
     def _build_oauth_instructions(self, authorize_url: str) -> str:
         """Build user instructions for manual OAuth code extraction."""
@@ -69,17 +72,17 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_user(
-        self, user_input: Optional[Dict[str, Any]] = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the initial step."""
         self._client_id = DEFAULT_CLIENT_ID
         return await self.async_step_oauth()
 
     async def async_step_oauth(
-        self, user_input: Optional[Dict[str, Any]] = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle OAuth authentication."""
-        errors: Dict[str, str] = {}
+        errors: dict[str, str] = {}
 
         try:
             # First call: generate authorize URL and show instructions
@@ -225,7 +228,7 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
     async def async_step_select_device(
-        self, user_input: Optional[Dict[str, Any]] = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle device selection."""
         if user_input is not None:
@@ -294,7 +297,7 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_reauth(
-        self, user_input: Optional[Dict[str, Any]] = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle reauthentication."""
         self._reauth_entry = self.hass.config_entries.async_get_entry(
@@ -316,11 +319,11 @@ class PhilipsAirplusOptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
         self._entry = config_entry
-        self._client_id: Optional[str] = config_entry.data.get(
+        self._client_id: str | None = config_entry.data.get(
             CONF_CLIENT_ID, DEFAULT_CLIENT_ID
         )
-        self._oauth_flow_id: Optional[str] = None
-        self._oauth_instructions: Optional[str] = None
+        self._oauth_flow_id: str | None = None
+        self._oauth_instructions: str | None = None
 
     def _build_init_schema(self, enable_mqtt: bool, auth_code: str = "") -> vol.Schema:
         """Build options form schema."""
@@ -349,7 +352,7 @@ class PhilipsAirplusOptionsFlowHandler(config_entries.OptionsFlow):
         self,
         enable_mqtt: bool,
         auth_code: str = "",
-        errors: Optional[Dict[str, str]] = None,
+        errors: dict[str, str] | None = None,
     ) -> FlowResult:
         """Render options form with current placeholders."""
         if not self._oauth_flow_id or not self._oauth_instructions:
@@ -373,7 +376,7 @@ class PhilipsAirplusOptionsFlowHandler(config_entries.OptionsFlow):
         )
 
     async def async_step_init(
-        self, user_input: Optional[Dict[str, Any]] = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
         enable_mqtt = self._entry.options.get(CONF_ENABLE_MQTT, True)

@@ -2,34 +2,29 @@
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import hashlib
-import json
 import logging
 import re
 import secrets
-import ssl
-import time
 import urllib.parse
 import urllib.request
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, Callable, Awaitable
+from typing import Any
 
-import aiohttp
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
-    AUTH_MODE_OAUTH,
     HTTP_USER_AGENT,
     OIDC_DEFAULT_ISSUER_BASE,
     OIDC_DEFAULT_REDIRECT_URI,
     OIDC_DEFAULT_SCOPES,
     OIDC_DEFAULT_TENANT_SEGMENT,
+    SIGNATURE_ENDPOINT,
     TOKEN_REFRESH_BUFFER,
     USER_SELF_ENDPOINT,
-    SIGNATURE_ENDPOINT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,7 +39,7 @@ class AuthenticationExpired(Exception):
 class PhilipsAirplusOAuth2Implementation:
     """Lightweight PKCE OAuth helper (manual code copy flow)."""
 
-    def __init__(self, hass: HomeAssistant, client_id: Optional[str] = None) -> None:
+    def __init__(self, hass: HomeAssistant, client_id: str | None = None) -> None:
         self.hass = hass
         self.client_id = client_id
         self.issuer_base = OIDC_DEFAULT_ISSUER_BASE.rstrip("/")
@@ -169,18 +164,18 @@ class PhilipsAirplusAuth:
         self,
         hass: HomeAssistant,
         auth_mode: str,
-        access_token: Optional[str] = None,
-        refresh_token: Optional[str] = None,
-        client_id: Optional[str] = None,
-        token_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
+        access_token: str | None = None,
+        refresh_token: str | None = None,
+        client_id: str | None = None,
+        token_callback: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
     ) -> None:
         self.hass = hass
         self.auth_mode = auth_mode
         self.access_token = access_token
         self.refresh_token = refresh_token
-        self.expires_at: Optional[datetime] = None
-        self.user_id: Optional[str] = None
-        self.signature: Optional[str] = None
+        self.expires_at: datetime | None = None
+        self.user_id: str | None = None
+        self.signature: str | None = None
         self._client_id = client_id
         self._token_callback = token_callback
 

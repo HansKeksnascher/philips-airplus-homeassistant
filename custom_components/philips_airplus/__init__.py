@@ -4,17 +4,16 @@ from __future__ import annotations
 import logging
 
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers import entity_registry as er
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.service import ServiceCall
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.service import ServiceCall
 
-from .const import DOMAIN, CONF_ENABLE_MQTT
 from . import config_flow  # needed so HA can build the options flow
+from .const import CONF_ENABLE_MQTT, DOMAIN
 from .coordinator import PhilipsAirplusDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -142,20 +141,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug("Entity registry check failed: %s; proceeding with setup.", exc)
 
     coordinator = PhilipsAirplusDataCoordinator(hass, entry)
-    
+
     try:
         await coordinator.async_setup()
         await coordinator.async_config_entry_first_refresh()
     except Exception as ex:
         raise ConfigEntryNotReady(f"Unable to connect to Philips Air+ device: {ex}") from ex
-    
+
     entry.runtime_data = coordinator
 
     # Register domain services once (not per entry)
     _ensure_services_registered(hass)
-    
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    
+
     return True
 
 
@@ -164,9 +163,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = entry.runtime_data
     if coordinator:
         await coordinator.async_shutdown()
-    
+
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    
+
     return unload_ok
 
 

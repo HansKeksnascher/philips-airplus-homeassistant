@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-import urllib.request
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import aiohttp
 
@@ -33,7 +32,7 @@ class PhilipsAirplusAPIClient:
     def __init__(self, access_token: str) -> None:
         """Initialize API client."""
         self.access_token = access_token
-        self._session: Optional[aiohttp.ClientSession] = None
+        self._session: aiohttp.ClientSession | None = None
 
     def _get_session(self) -> aiohttp.ClientSession:
         """Get or create HTTP session."""
@@ -46,7 +45,7 @@ class PhilipsAirplusAPIClient:
         if self._session and not self._session.closed:
             await self._session.close()
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """Get request headers."""
         return {
             "Authorization": f"Bearer {self.access_token}",
@@ -54,7 +53,7 @@ class PhilipsAirplusAPIClient:
             "User-Agent": HTTP_USER_AGENT,
         }
 
-    async def _fetch_json(self, url: str, timeout: int = 20) -> Dict[str, Any]:
+    async def _fetch_json(self, url: str, timeout: int = 20) -> dict[str, Any]:
         """Fetch JSON from API endpoint."""
         session = self._get_session()
         headers = self._get_headers()
@@ -83,7 +82,7 @@ class PhilipsAirplusAPIClient:
         except json.JSONDecodeError as ex:
             raise PhilipsAirplusAPIError(f"Invalid JSON response: {ex}") from ex
 
-    async def list_devices(self) -> List[Dict[str, Any]]:
+    async def list_devices(self) -> list[dict[str, Any]]:
         """List all devices associated with the account."""
         try:
             data = await self._fetch_json(DEVICE_ENDPOINT)
@@ -129,7 +128,7 @@ class PhilipsAirplusAPIClient:
         except Exception as ex:
             raise PhilipsAirplusAPIError(f"Failed to fetch signature: {ex}") from ex
 
-    async def get_user_info(self) -> Dict[str, Any]:
+    async def get_user_info(self) -> dict[str, Any]:
         """Get user information."""
         try:
             user_endpoint = f"{API_BASE_URL}/da/user/self"
@@ -145,7 +144,7 @@ class PhilipsAirplusAPIClient:
 class PhilipsAirplusDevice:
     """Representation of a Philips Air+ device."""
 
-    def __init__(self, device_data: Dict[str, Any]) -> None:
+    def __init__(self, device_data: dict[str, Any]) -> None:
         """Initialize device."""
         self._data = device_data
         self._uuid = self._extract_uuid()
@@ -185,7 +184,7 @@ class PhilipsAirplusDevice:
         return self._type
 
     @property
-    def data(self) -> Dict[str, Any]:
+    def data(self) -> dict[str, Any]:
         """Get raw device data."""
         return self._data
 
@@ -198,7 +197,7 @@ class PhilipsAirplusDevice:
         return f"PhilipsAirplusDevice(uuid={self.uuid!r}, name={self.name!r}, type={self.type!r})"
 
 
-def extract_user_id_from_token(token: str) -> Optional[str]:
+def extract_user_id_from_token(token: str) -> str | None:
     """Extract user ID from JWT token."""
     try:
         import base64
@@ -220,7 +219,7 @@ def extract_user_id_from_token(token: str) -> Optional[str]:
         return None
 
 
-def extract_expiration_from_token(token: str) -> Optional[int]:
+def extract_expiration_from_token(token: str) -> int | None:
     """Extract expiration timestamp from JWT token."""
     try:
         import base64

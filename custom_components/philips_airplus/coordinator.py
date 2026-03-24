@@ -6,17 +6,16 @@ import asyncio
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import PhilipsAirplusAPIClient, PhilipsAirplusDevice, build_client_id
-from .auth import PhilipsAirplusAuth, AuthenticationExpired
+from .api import PhilipsAirplusAPIClient, build_client_id
+from .auth import AuthenticationExpired, PhilipsAirplusAuth
 from .const import (
-    AUTH_MODE_OAUTH,
     CONF_ACCESS_TOKEN,
     CONF_AUTH_MODE,
     CONF_CLIENT_ID,
@@ -30,28 +29,19 @@ from .const import (
     PORT_FILTER_READ,
     PORT_STATUS,
     PRESET_MODE_MANUAL,
-    PRESET_MODE_SLEEP,
-    PRESET_MODE_TURBO,
     PROP_FAN_SPEED,
-    PROP_FILTER_CLEAN_NOMINAL,
-    PROP_FILTER_CLEAN_REMAINING,
-    PROP_FILTER_REPLACE_NOMINAL,
-    PROP_FILTER_REPLACE_REMAINING,
     PROP_MODE,
     PROP_POWER_FLAG,
     SCAN_INTERVAL,
     TOKEN_REFRESH_BUFFER,
-    TOPIC_CONTROL_TEMPLATE,
-    TOPIC_SHADOW_UPDATE_TEMPLATE,
-    TOPIC_STATUS_TEMPLATE,
 )
-from .mqtt_client import PhilipsAirplusMQTTClient
 from .model_manager import PhilipsAirplusModelManager
+from .mqtt_client import PhilipsAirplusMQTTClient
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
+class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Data coordinator for Philips Air+ device."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -100,23 +90,23 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
         self._model_manager = PhilipsAirplusModelManager(hass, component_path)
 
         # Initialize MQTT client
-        self._mqtt_client: Optional[PhilipsAirplusMQTTClient] = None
+        self._mqtt_client: PhilipsAirplusMQTTClient | None = None
 
         # Device state
-        self._device_state: Dict[str, Any] = {}
-        self._filter_data: Dict[str, Any] = {}
+        self._device_state: dict[str, Any] = {}
+        self._filter_data: dict[str, Any] = {}
 
         # Model config will be loaded after async_load_models() is called
         # Defaulting to empty dict until then
-        self._model_config: Dict[str, Any] = {}
+        self._model_config: dict[str, Any] = {}
 
         # Connection status
         self._connected = False
-        self._last_update: Optional[datetime] = None
-        self._last_full_request: Optional[datetime] = None
-        self._reconnect_task: Optional[asyncio.Task] = None
+        self._last_update: datetime | None = None
+        self._last_full_request: datetime | None = None
+        self._reconnect_task: asyncio.Task | None = None
 
-    async def _on_token_refresh(self, token_data: Dict[str, Any]) -> None:
+    async def _on_token_refresh(self, token_data: dict[str, Any]) -> None:
         """Handle token refresh events."""
         _LOGGER.debug("Token refreshed, updating config entry")
         _LOGGER.info(
@@ -159,12 +149,12 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
         return self._connected
 
     @property
-    def device_state(self) -> Dict[str, Any]:
+    def device_state(self) -> dict[str, Any]:
         """Get device state."""
         return self._device_state
 
     @property
-    def filter_data(self) -> Dict[str, Any]:
+    def filter_data(self) -> dict[str, Any]:
         """Get filter data."""
         return self._filter_data
 
@@ -319,17 +309,16 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
             }
         )
 
-    def _on_mqtt_message(self, message_data: Dict[str, Any]) -> None:
+    def _on_mqtt_message(self, message_data: dict[str, Any]) -> None:
         """Handle incoming MQTT messages."""
         # This runs in the MQTT client thread, so we must schedule the update
         # on the main event loop to safely interact with HA.
         self.hass.loop.call_soon_threadsafe(self._on_mqtt_message_in_loop, message_data)
 
-    def _on_mqtt_message_in_loop(self, message_data: Dict[str, Any]) -> None:
+    def _on_mqtt_message_in_loop(self, message_data: dict[str, Any]) -> None:
         """Handle incoming MQTT messages (in event loop)."""
         try:
             self._last_update = datetime.now()
-            command = message_data.get("cn")
             data = message_data.get("data", {})
             # Some responses (e.g., getAllPorts) return a list of port descriptors
             if isinstance(data, list):
@@ -364,7 +353,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
         except Exception as ex:
             _LOGGER.error("Error processing MQTT message: %s", ex)
 
-    def _process_status_update(self, properties: Dict[str, Any]) -> None:
+    def _process_status_update(self, properties: dict[str, Any]) -> None:
         """Process status update."""
         self._device_state.update(properties)
 
@@ -390,7 +379,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
             }
         )
 
-    def _process_config_update(self, properties: Dict[str, Any]) -> None:
+    def _process_config_update(self, properties: dict[str, Any]) -> None:
         """Process config update."""
         if "ctn" in properties:
             model = properties["ctn"]
@@ -398,7 +387,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
             # Update model config if it changed
             self._model_config = self._model_manager.get_model_config(model)
 
-    def _process_filter_update(self, properties: Dict[str, Any]) -> None:
+    def _process_filter_update(self, properties: dict[str, Any]) -> None:
         """Process filter update."""
         self._filter_data.update(properties)
 
@@ -424,7 +413,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
         )
         return name or PRESET_MODE_MANUAL
 
-    def _get_filter_info(self) -> Optional[Dict[str, Any]]:
+    def _get_filter_info(self) -> dict[str, Any] | None:
         """Get filter information."""
         filter_info = {}
 
@@ -472,7 +461,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
 
         return filter_info if filter_info else None
 
-    async def _async_update_data(self) -> Dict[str, Any]:
+    async def _async_update_data(self) -> dict[str, Any]:
         """Update device data."""
         if not self._mqtt_client or not self._mqtt_client.is_connected():
             raise UpdateFailed("MQTT client not connected")

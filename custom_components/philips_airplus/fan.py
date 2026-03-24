@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Optional, Any
+from typing import Any
 
 from homeassistant.components.fan import (
     FanEntity,
@@ -33,7 +33,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Philips Air+ fan."""
     coordinator = entry.runtime_data
-    
+
     async_add_entities([PhilipsAirplusFan(coordinator, entry)])
 
 
@@ -59,7 +59,7 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
         """Initialize the fan."""
         super().__init__(coordinator)
         self.entry = entry
-        
+
         self._attr_unique_id = f"{entry.data['device_uuid']}_fan"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.data["device_uuid"])},
@@ -86,7 +86,7 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
         power = self._get_device_property(PROP_POWER_FLAG)
         if power is not None and int(power) == 0:
             return False
-            
+
         speed = self._get_device_property(PROP_FAN_SPEED)
         if speed is None:
             return False
@@ -98,7 +98,7 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
         self.async_write_ha_state()
 
     @property
-    def current_speed(self) -> Optional[int]:
+    def current_speed(self) -> int | None:
         """Return the current speed."""
         return self._get_device_property(PROP_FAN_SPEED)
 
@@ -108,17 +108,17 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
         return 100
 
     @property
-    def percentage(self) -> Optional[int]:
+    def percentage(self) -> int | None:
         """Return the current speed percentage."""
         speed = self._get_device_property(PROP_FAN_SPEED)
         if not self.is_on:
             return 0
-            
+
         # Get supported speeds from model config (already ordered by intensity)
         supported_speeds = self.coordinator._model_config.get("speeds", [])
         if not supported_speeds:
             return 0
-            
+
         try:
             speed_int = int(speed)
             if speed_int in supported_speeds:
@@ -128,16 +128,16 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
                 return int(round((idx + 1) / len(supported_speeds) * 100))
         except (ValueError, TypeError):
             pass
-            
+
         return 0
 
     @property
-    def preset_mode(self) -> Optional[str]:
+    def preset_mode(self) -> str | None:
         """Return the current preset mode."""
         mode_value = self._get_device_property(PROP_MODE)
         if mode_value is None:
             return None
-            
+
         name = self.coordinator._get_mode_name(mode_value)
         # Filter out manual mode if it's just a placeholder
         return name if name != PRESET_MODE_MANUAL else None
@@ -151,11 +151,11 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""
         _LOGGER.debug("Setting percentage=%s", percentage)
-        
+
         if percentage == 0:
             await self.async_turn_off()
             return
-            
+
         supported_speeds = self.coordinator._model_config.get("speeds", [])
         if not supported_speeds:
             _LOGGER.error("No speeds defined for this model")
@@ -165,12 +165,12 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
         # Map percentage to speed index: 1..100 -> 0..len-1
         idx = math.ceil(percentage / 100 * len(supported_speeds)) - 1
         idx = max(0, min(idx, len(supported_speeds) - 1))
-        
+
         target_speed = supported_speeds[idx]
         _LOGGER.debug("Mapped percentage %s to speed value %s", percentage, target_speed)
-        
+
         success = await self.coordinator.set_fan_speed(target_speed)
-            
+
         if not success:
             _LOGGER.error("Failed to set speed to %s", target_speed)
 
@@ -179,10 +179,10 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
         if preset_mode not in self.preset_modes:
             _LOGGER.error("Invalid preset mode: %s", preset_mode)
             return
-            
+
         _LOGGER.debug("Setting preset mode to %s", preset_mode)
         success = await self.coordinator.set_mode(preset_mode)
-        
+
         if not success:
             _LOGGER.error("Failed to set preset mode to %s", preset_mode)
 
@@ -211,22 +211,22 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
     def extra_state_attributes(self) -> dict:
         """Return additional state attributes."""
         attributes = {}
-        
+
         raw_mode = self._get_device_property(PROP_MODE)
         if raw_mode is not None:
             attributes["raw_mode"] = raw_mode
-        
+
         raw_speed = self._get_device_property(PROP_FAN_SPEED)
         if raw_speed is not None:
             attributes["raw_speed"] = raw_speed
-        
+
         attributes["connected"] = self.coordinator.is_connected
-        
+
         # Include last update timestamp to ensure HA updates "last updated" on each refresh
         # Use coordinator.data which is updated via async_set_updated_data()
         if self.coordinator.data:
             last_update = self.coordinator.data.get("last_update")
             if last_update:
                 attributes["last_update"] = last_update.isoformat()
-        
+
         return attributes

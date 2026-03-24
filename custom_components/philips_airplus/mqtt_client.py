@@ -1,16 +1,17 @@
 """MQTT client for Philips Air+ integration."""
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import random
-import string
-import time
-import asyncio
 import ssl
+import string
 import threading
+import time
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.client import MQTTMessage
@@ -24,9 +25,9 @@ from .const import (
     PORT_FILTER_READ,
     PORT_FILTER_WRITE,
     PORT_STATUS,
+    PROP_FAN_SPEED,
     PROP_FILTER_CLEAN_RESET_RAW,
     PROP_FILTER_REPLACE_RESET_RAW,
-    PROP_FAN_SPEED,
     PROP_MODE,
     TOPIC_CONTROL_TEMPLATE,
     TOPIC_STATUS_TEMPLATE,
@@ -43,7 +44,7 @@ class PhilipsAirplusMQTTClient:
         device_id: str,
         access_token: str,
         signature: str,
-        client_id: Optional[str] = None,
+        client_id: str | None = None,
         custom_authorizer_name: str = "CustomAuthorizer",
     ) -> None:
         """Initialize MQTT client."""
@@ -54,8 +55,8 @@ class PhilipsAirplusMQTTClient:
         self.signature = signature
         self.client_id = client_id or f"ha-{device_id}"
         self.custom_authorizer_name = custom_authorizer_name
-        
-        self._client: Optional[mqtt.Client] = None
+
+        self._client: mqtt.Client | None = None
         self._connected = False
         self._connecting = False
         self._last_disconnect_time: float = 0.0
@@ -65,15 +66,15 @@ class PhilipsAirplusMQTTClient:
         self._reconnect_max_backoff: float = 300.0
         self._rc7_cooldown: float = 120.0
         self._lock = threading.Lock()
-        self._message_callback: Optional[Callable[[Dict[str, Any]], None]] = None
-        self._connection_callback: Optional[Callable[[bool], None]] = None
+        self._message_callback: Callable[[dict[str, Any]], None] | None = None
+        self._connection_callback: Callable[[bool], None] | None = None
         self._last_nonzero_speed: int = 8
         self._refreshing_credentials: bool = False  # Flag to maintain availability during credential refresh
-        
+
         self.outbound_topic = TOPIC_CONTROL_TEMPLATE.format(device_id=self.device_id)
         self.inbound_topic = TOPIC_STATUS_TEMPLATE.format(device_id=self.device_id)
 
-    def set_message_callback(self, callback: Callable[[Dict[str, Any]], None]) -> None:
+    def set_message_callback(self, callback: Callable[[dict[str, Any]], None]) -> None:
         """Set callback for incoming messages."""
         self._message_callback = callback
 
@@ -81,7 +82,7 @@ class PhilipsAirplusMQTTClient:
         """Set callback for connection status changes."""
         self._connection_callback = callback
 
-    def _build_headers(self) -> Dict[str, str]:
+    def _build_headers(self) -> dict[str, str]:
         """Build WebSocket headers for authentication."""
         return {
             'x-amz-customauthorizer-name': self.custom_authorizer_name,
@@ -92,10 +93,10 @@ class PhilipsAirplusMQTTClient:
             'Sec-WebSocket-Protocol': 'mqtt',
         }
 
-    def _on_connect(self, client: mqtt.Client, userdata: Any, flags: Dict[str, Any], rc: int) -> None:
+    def _on_connect(self, client: mqtt.Client, userdata: Any, flags: dict[str, Any], rc: int) -> None:
         """Handle MQTT connection."""
         _LOGGER.info("Connected to MQTT with rc=%s", rc)
-        
+
         if rc == 0:
             self._connected = True
             self._reconnect_attempts = 0
@@ -103,13 +104,13 @@ class PhilipsAirplusMQTTClient:
             self._last_disconnect_time = 0.0
             client.subscribe(self.inbound_topic, qos=0)
             _LOGGER.info("Subscribed to %s", self.inbound_topic)
-            
+
             if self._connection_callback:
                 self._connection_callback(True)
         else:
             self._connected = False
             _LOGGER.error("Connection failed with rc=%s", rc)
-            
+
             if self._connection_callback:
                 self._connection_callback(False)
 
@@ -118,12 +119,12 @@ class PhilipsAirplusMQTTClient:
         try:
             payload = msg.payload.decode('utf-8')
             message_data = json.loads(payload)
-            
+
             _LOGGER.debug("Received message: %s", message_data)
-            
+
             if self._message_callback:
                 self._message_callback(message_data)
-                
+
         except json.JSONDecodeError as ex:
             _LOGGER.error("Failed to decode MQTT message: %s", ex)
         except Exception as ex:
@@ -150,7 +151,7 @@ class PhilipsAirplusMQTTClient:
                 pass
             self._client = None
         self._connected = False
-        
+
         # Skip connection callback during credential refresh to prevent unavailable state
         if self._connection_callback and not self._refreshing_credentials:
             self._connection_callback(False)
@@ -163,7 +164,7 @@ class PhilipsAirplusMQTTClient:
             if self._connected:
                 return True
             self._connecting = True
-        
+
         try:
             # Apply backoff if recent disconnect
             if self._last_disconnect_time and self._last_disconnect_rc != 0:
@@ -173,7 +174,7 @@ class PhilipsAirplusMQTTClient:
                     wait = backoff - elapsed
                     _LOGGER.warning("Throttling reconnect for %.1fs", wait)
                     time.sleep(wait)
-            
+
             # Special cooldown for rc=7
             if self._last_disconnect_rc == 7:
                 elapsed_since = time.time() - self._last_disconnect_time if self._last_disconnect_time else None
@@ -181,36 +182,36 @@ class PhilipsAirplusMQTTClient:
                     wait = self._rc7_cooldown - elapsed_since
                     _LOGGER.warning("Recent rc=7 disconnect; enforcing cooldown for %.1fs", wait)
                     time.sleep(wait)
-            
+
             headers = self._build_headers()
-            
+
             self._client = mqtt.Client(
                 client_id=self.client_id,
                 transport='websockets',
                 protocol=mqtt.MQTTv311
             )
-            
+
             self._client.ws_set_options(path=MQTT_PATH, headers=headers)
-            
+
             try:
                 self._client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
             except Exception as tls_ex:
                 _LOGGER.warning("Failed to set TLSv1.2: %s", tls_ex)
-            
+
             self._client.on_connect = self._on_connect
             self._client.on_message = self._on_message
             self._client.on_disconnect = self._on_disconnect
-            
+
             _LOGGER.debug("Connecting to %s:%s with client_id=%s", MQTT_HOST, MQTT_PORT, self.client_id)
             self._client.connect(MQTT_HOST, MQTT_PORT, keepalive=KEEPALIVE)
             self._client.loop_start()
-            
+
             start_ts = time.time()
             while (time.time() - start_ts) < timeout:
                 if self._connected:
                     break
                 time.sleep(0.1)
-            
+
             if not self._connected:
                 _LOGGER.error("Connection timeout after %.2fs", time.time() - start_ts)
                 if self._client:
@@ -224,10 +225,10 @@ class PhilipsAirplusMQTTClient:
                         pass
                 self._client = None
                 return False
-            
+
             _LOGGER.info("MQTT connected successfully (%.2fs)", time.time() - start_ts)
             return True
-            
+
         except Exception as ex:
             _LOGGER.error("Failed during MQTT connect: %s", ex)
             if self._client:
@@ -270,7 +271,7 @@ class PhilipsAirplusMQTTClient:
 
     def is_connected(self) -> bool:
         """Check if MQTT client is connected.
-        
+
         Returns True during credential refresh to prevent unavailable state
         while reconnecting with new tokens.
         """
@@ -288,7 +289,7 @@ class PhilipsAirplusMQTTClient:
         self,
         command_name: str,
         port_name: str,
-        properties: Dict[str, Any]
+        properties: dict[str, Any]
     ) -> str:
         """Build command payload."""
         payload = {
@@ -309,25 +310,25 @@ class PhilipsAirplusMQTTClient:
         if not self._connected:
             _LOGGER.error("MQTT not connected")
             return False
-        
+
         payload = self._build_command_payload(
             'setPort',
             PORT_CONTROL,
             {raw_key: speed}
         )
-        
+
         _LOGGER.debug("Setting fan speed to %s using key %s", speed, raw_key)
-        
+
         if speed > 0:
             self._last_nonzero_speed = speed
-        
+
         res = self._publish(payload)
-        
+
         try:
             self.request_port_status(PORT_STATUS)
         except Exception:
             pass
-        
+
         return res
 
     def set_mode(self, mode: int, raw_key: str = PROP_MODE) -> bool:
@@ -335,39 +336,39 @@ class PhilipsAirplusMQTTClient:
         if not self._connected:
             _LOGGER.error("MQTT not connected")
             return False
-        
+
         payload = self._build_command_payload(
             'setPort',
             PORT_CONTROL,
             {raw_key: mode}
         )
-        
+
         _LOGGER.debug("Setting mode to %s using key %s", mode, raw_key)
         success = self._publish(payload)
-        
+
         try:
             self.request_port_status(PORT_STATUS)
         except Exception:
             pass
-        
+
         return success
 
-    def set_power(self, power_on: bool, raw_speed_key: str = PROP_FAN_SPEED, raw_power_key: Optional[str] = None) -> bool:
+    def set_power(self, power_on: bool, raw_speed_key: str = PROP_FAN_SPEED, raw_power_key: str | None = None) -> bool:
         """Set power state."""
         if not self._connected:
             _LOGGER.error("MQTT not connected")
-            return False    
+            return False
 
-        power_val = 1 if power_on == True else 0
+        power_val = 1 if power_on else 0
         desired = {"state": {"desired": {"powerOn": True if power_val == 1 else False}}}
         shadow_payload = json.dumps(desired, separators=(',', ':'))
-    
+
         success = self._publish(shadow_payload, topic=f"$aws/things/{self.device_id}/shadow/update")
-        
+
         if success:
             # Force immediate status update to reflect change in HA
             self.request_port_status(PORT_STATUS)
-        
+
         return success
 
     def reset_filter_clean(self) -> bool:
@@ -435,7 +436,7 @@ class PhilipsAirplusMQTTClient:
             port_name,
             {}
         )
-        
+
         _LOGGER.debug("Requesting status for port %s", port_name)
         return self._publish(payload)
 
@@ -450,7 +451,7 @@ class PhilipsAirplusMQTTClient:
             '',
             {}
         )
-        
+
         _LOGGER.debug("Requesting status for all ports")
         return self._publish(payload)
 
@@ -464,7 +465,7 @@ class PhilipsAirplusMQTTClient:
         _LOGGER.debug("Requesting shadow get")
         return self._publish('{}', topic=shadow_topic)
 
-    def _publish(self, payload: str, topic: Optional[str] = None, qos: int = 0) -> bool:
+    def _publish(self, payload: str, topic: str | None = None, qos: int = 0) -> bool:
         """Publish message to MQTT broker."""
         if not self._client or not self._connected:
             _LOGGER.error("MQTT client not connected")
@@ -473,31 +474,31 @@ class PhilipsAirplusMQTTClient:
         try:
             publish_topic = topic or self.outbound_topic
             result = self._client.publish(publish_topic, payload, qos=qos)
-            
+
             if getattr(result, 'rc', None) == mqtt.MQTT_ERR_SUCCESS:
                 _LOGGER.debug("Published to %s: %s", publish_topic, payload)
                 return True
             else:
                 _LOGGER.error("Failed to publish to %s: rc=%s", publish_topic, getattr(result, 'rc', None))
                 return False
-                
+
         except Exception as ex:
             _LOGGER.error("Error publishing message: %s", ex)
             return False
 
     async def async_update_credentials(self, access_token: str, signature: str) -> bool:
         """Update credentials and reconnect.
-        
+
         Sets _refreshing_credentials flag to maintain availability during reconnection.
         """
         self.access_token = access_token
         self.signature = signature
-        
+
         with self._lock:
             if self._connecting:
                 _LOGGER.debug("Connect in progress; deferring credential update")
                 return False
-        
+
         # Set flag to prevent unavailable state during reconnection
         self._refreshing_credentials = True
         try:

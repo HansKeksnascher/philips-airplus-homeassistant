@@ -3,12 +3,10 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Any
+
 import yaml
-from typing import Any, Dict, Optional
-
 from homeassistant.core import HomeAssistant
-
-from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,18 +18,18 @@ class PhilipsAirplusModelManager:
         """Initialize the model manager."""
         self._hass = hass
         self._component_path = component_path
-        self._models: Dict[str, Any] = {}
-        self._default_model: Optional[str] = None
+        self._models: dict[str, Any] = {}
+        self._default_model: str | None = None
 
     async def async_load_models(self) -> None:
         """Load models from yaml file asynchronously."""
         yaml_path = os.path.join(self._component_path, "models.yaml")
-        
+
         def _load_yaml():
             """Load YAML file in executor."""
-            with open(yaml_path, "r", encoding="utf-8") as f:
+            with open(yaml_path, encoding="utf-8") as f:
                 return yaml.safe_load(f)
-        
+
         try:
             # Run blocking file I/O in executor to avoid blocking event loop
             data = await self._hass.async_add_executor_job(_load_yaml)
@@ -41,31 +39,31 @@ class PhilipsAirplusModelManager:
         except Exception as ex:
             _LOGGER.error("Failed to load models.yaml: %s", ex)
 
-    def get_model_config(self, model_id: str) -> Dict[str, Any]:
+    def get_model_config(self, model_id: str) -> dict[str, Any]:
         """Get configuration for a specific model."""
         # Try exact match
         if model_id in self._models:
             return self._models[model_id]
-        
+
         # Try partial match (e.g. AC0650)
         for key, config in self._models.items():
             if key in model_id:
                 return config
-                
+
         # Fallback to default
         if self._default_model and self._default_model in self._models:
             _LOGGER.warning("Model %s not found, using default %s", model_id, self._default_model)
             return self._models[self._default_model]
-            
+
         _LOGGER.error("Model %s not found and no default available", model_id)
         return {}
 
-    def get_mode_value(self, model_id: str, mode_name: str) -> Optional[int]:
+    def get_mode_value(self, model_id: str, mode_name: str) -> int | None:
         """Get value for a specific mode."""
         config = self.get_model_config(model_id)
         return config.get("modes", {}).get(mode_name)
 
-    def get_mode_name(self, model_id: str, mode_value: int) -> Optional[str]:
+    def get_mode_name(self, model_id: str, mode_value: int) -> str | None:
         """Get name for a specific mode value."""
         config = self.get_model_config(model_id)
         for name, val in config.get("modes", {}).items():

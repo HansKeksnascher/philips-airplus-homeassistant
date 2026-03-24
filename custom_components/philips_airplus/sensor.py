@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -21,8 +20,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     DOMAIN,
-    PROP_FILTER_CLEAN_REMAINING,
-    PROP_FILTER_REPLACE_REMAINING,
 )
 from .coordinator import PhilipsAirplusDataCoordinator
 
@@ -72,11 +69,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up Philips Air+ sensors."""
     coordinator = entry.runtime_data
-    
+
     entities = []
     for description in SENSOR_DESCRIPTIONS:
         entities.append(PhilipsAirplusSensor(coordinator, entry, description))
-    
+
     async_add_entities(entities)
 
 
@@ -95,7 +92,7 @@ class PhilipsAirplusSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self.entry = entry
         self.entity_description = description
-        
+
         # Use stable unique_id based on device UUID so entity registry matches
         self._attr_unique_id = f"{entry.data['device_uuid']}_{description.key}"
         self._attr_device_info = {
@@ -111,16 +108,16 @@ class PhilipsAirplusSensor(CoordinatorEntity, SensorEntity):
         return self.coordinator.is_connected
 
     @property
-    def native_value(self) -> Optional[str | int | float]:
+    def native_value(self) -> str | int | float | None:
         """Return the native value of the sensor."""
         key = self.entity_description.key
-        
+
         if key.startswith("filter_"):
             # Filter data from filter_info
             if self.coordinator.data:
                 filter_info = self.coordinator.data.get("filter_info", {})
                 return filter_info.get(key.replace("filter_", ""))
-        
+
         return None
 
     def _handle_coordinator_update(self) -> None:
@@ -132,7 +129,7 @@ class PhilipsAirplusSensor(CoordinatorEntity, SensorEntity):
         """Return additional state attributes."""
         key = self.entity_description.key
         attributes = {}
-        
+
         if key.startswith("filter_") and self.coordinator.data:
             # Add filter hours total if available (use calculated filter_info from coordinator data)
             filter_info = self.coordinator.data.get("filter_info", {})
@@ -142,5 +139,5 @@ class PhilipsAirplusSensor(CoordinatorEntity, SensorEntity):
             elif key == "filter_clean_percentage":
                 if "clean_hours_total" in filter_info:
                     attributes["total_hours"] = filter_info["clean_hours_total"]
-        
+
         return attributes

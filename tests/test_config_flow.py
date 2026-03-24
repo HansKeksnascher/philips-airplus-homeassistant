@@ -1,14 +1,16 @@
 """Tests for Philips Air+ config flow."""
 
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.philips_airplus.api import PhilipsAirplusAuthError, PhilipsAirplusAPIError
+from custom_components.philips_airplus.api import (
+    PhilipsAirplusAPIError,
+    PhilipsAirplusAuthError,
+)
 from custom_components.philips_airplus.config_flow import PhilipsAirplusConfigFlow
-from custom_components.philips_airplus.const import DOMAIN
 
 
 @pytest.fixture

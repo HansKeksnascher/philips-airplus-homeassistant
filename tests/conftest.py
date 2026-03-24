@@ -3,15 +3,13 @@
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
 
 # Add repo root to path so custom_components can be found
 repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root))
 
-from custom_components.philips_airplus.const import DOMAIN
 
 
 @pytest.fixture
