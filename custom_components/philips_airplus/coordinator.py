@@ -21,6 +21,7 @@ from .const import (
     CONF_CLIENT_ID,
     CONF_DEVICE_ID,
     CONF_DEVICE_NAME,
+    CONF_DEVICE_TYPE,
     CONF_DEVICE_UUID,
     CONF_REFRESH_TOKEN,
     CONF_TOKEN_EXPIRES_AT,
@@ -169,8 +170,9 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Load models asynchronously (fixes blocking I/O warning)
             await self._model_manager.async_load_models()
 
-            # Load default model config (will be updated when we get model from device)
-            self._model_config = self._model_manager.get_model_config("AC0650/10")
+            # Load model config based on stored device type
+            device_type = self.entry.data.get(CONF_DEVICE_TYPE, "AC0650/10")
+            self._model_config = self._model_manager.get_model_config(device_type)
 
             # Ensure access token is valid (or refreshed) before any auth-dependent API calls.
             if self._auth.expires_at:
@@ -395,8 +397,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if "ctn" in properties:
             model = properties["ctn"]
             _LOGGER.debug("Device model reported: %s", model)
-            # Update model config if it changed
-            self._model_config = self._model_manager.get_model_config(model, detected_model_id=model)
+            self._model_config = self._model_manager.get_model_config(model)
 
     def _process_filter_update(self, properties: dict[str, Any]) -> None:
         """Process filter update."""
@@ -419,10 +420,11 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _get_mode_name(self, mode_value: int) -> str:
         """Get mode name from value."""
-        name = self._model_manager.get_mode_name(
-            self._model_config.get("name", "AC0650/10"), mode_value
-        )
-        return name or PRESET_MODE_MANUAL
+        modes = self._model_config.get("modes", {})
+        for name, val in modes.items():
+            if val == mode_value:
+                return name
+        return PRESET_MODE_MANUAL
 
     def _get_filter_info(self) -> dict[str, Any] | None:
         """Get filter information."""

@@ -25,6 +25,7 @@ from .const import (
     CONF_CLIENT_ID,
     CONF_DEVICE_ID,
     CONF_DEVICE_NAME,
+    CONF_DEVICE_TYPE,
     CONF_DEVICE_UUID,
     CONF_ENABLE_MQTT,
     CONF_REFRESH_TOKEN,
@@ -257,6 +258,7 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # typ
                     CONF_DEVICE_ID: selected_device.uuid,
                     CONF_DEVICE_UUID: selected_device.uuid,
                     CONF_DEVICE_NAME: selected_device.name,
+                    CONF_DEVICE_TYPE: selected_device.type,
                     CONF_USER_ID: self._auth.user_id,
                     CONF_CLIENT_ID: self._client_id,
                 }
