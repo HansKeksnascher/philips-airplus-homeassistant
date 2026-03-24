@@ -30,10 +30,9 @@ _LOGGER = logging.getLogger(__name__)
 
 # Sensor descriptions
 SENSOR_DESCRIPTIONS: list[SensorEntityDescription] = [
-    # Filter sensors
     SensorEntityDescription(
         key="filter_replace_percentage",
-        name="Filter Replace",
+        translation_key="filter_replace_percentage",
         entity_category=EntityCategory.DIAGNOSTIC,
         device_class=SensorDeviceClass.POWER_FACTOR,
         native_unit_of_measurement=PERCENTAGE,
@@ -41,7 +40,7 @@ SENSOR_DESCRIPTIONS: list[SensorEntityDescription] = [
     ),
     SensorEntityDescription(
         key="filter_replace_hours_remaining",
-        name="Filter Replace Hours Remaining",
+        translation_key="filter_replace_hours_remaining",
         entity_category=EntityCategory.DIAGNOSTIC,
         device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.HOURS,
@@ -49,7 +48,7 @@ SENSOR_DESCRIPTIONS: list[SensorEntityDescription] = [
     ),
     SensorEntityDescription(
         key="filter_clean_percentage",
-        name="Filter Clean",
+        translation_key="filter_clean_percentage",
         entity_category=EntityCategory.DIAGNOSTIC,
         device_class=SensorDeviceClass.POWER_FACTOR,
         native_unit_of_measurement=PERCENTAGE,
@@ -57,7 +56,7 @@ SENSOR_DESCRIPTIONS: list[SensorEntityDescription] = [
     ),
     SensorEntityDescription(
         key="filter_clean_hours_remaining",
-        name="Filter Clean Hours Remaining",
+        translation_key="filter_clean_hours_remaining",
         entity_category=EntityCategory.DIAGNOSTIC,
         device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.HOURS,

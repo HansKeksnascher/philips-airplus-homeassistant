@@ -52,10 +52,8 @@ class _PhilipsAirplusBaseButton(CoordinatorEntity, ButtonEntity):
 
 
 class PhilipsAirplusResetFilterCleanButton(_PhilipsAirplusBaseButton):
-    """Button: reset clean-filter maintenance timer."""
-
     _attr_icon = "mdi:air-filter"
-    _attr_name = "Reset clean filter timer"
+    _attr_translation_key = "reset_filter_clean"
 
     def __init__(self, coordinator: PhilipsAirplusDataCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry)
@@ -68,10 +66,8 @@ class PhilipsAirplusResetFilterCleanButton(_PhilipsAirplusBaseButton):
 
 
 class PhilipsAirplusResetFilterReplaceButton(_PhilipsAirplusBaseButton):
-    """Button: reset replace-filter maintenance timer."""
-
     _attr_icon = "mdi:air-filter"
-    _attr_name = "Reset replace filter timer"
+    _attr_translation_key = "reset_filter_replace"
 
     def __init__(self, coordinator: PhilipsAirplusDataCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry)

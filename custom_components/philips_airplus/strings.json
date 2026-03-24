@@ -1,4 +1,31 @@
 {
+  "entity": {
+    "sensor": {
+      "filter_replace_percentage": {
+        "name": "Filter Replace"
+      },
+      "filter_replace_hours_remaining": {
+        "name": "Filter Replace Hours Remaining"
+      },
+      "filter_clean_percentage": {
+        "name": "Filter Clean"
+      },
+      "filter_clean_hours_remaining": {
+        "name": "Filter Clean Hours Remaining"
+      }
+    },
+    "button": {
+      "reset_filter_clean": {
+        "name": "Reset Clean Filter"
+      },
+      "reset_filter_replace": {
+        "name": "Reset Replace Filter"
+      }
+    },
+    "fan": {
+      "name": "Air Purifier"
+    }
+  },
   "config": {
     "step": {
       "user": {

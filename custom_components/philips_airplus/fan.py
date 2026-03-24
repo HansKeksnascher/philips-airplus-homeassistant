@@ -42,7 +42,8 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
 
     _attr_has_entity_name = True
     _attr_name = None
-    _attr_force_update = True  # Force HA to record state updates even if unchanged
+    _attr_translation_key = "fan"
+    _attr_force_update = True
     _attr_supported_features = (
         FanEntityFeature.SET_SPEED |
         FanEntityFeature.PRESET_MODE |
