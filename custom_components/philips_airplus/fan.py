@@ -90,10 +90,8 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
         if power is not None and int(power) == 0:
             return False
 
-        speed = self._get_device_property(PROP_FAN_SPEED)
-        if speed is None:
-            return False
-        return int(speed) > 0
+        mode = self._get_device_property(PROP_MODE)
+        return mode is not None
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
