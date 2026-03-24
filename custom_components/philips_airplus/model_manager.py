@@ -43,11 +43,11 @@ class PhilipsAirplusModelManager:
     def get_model_config(self, model_id: str) -> dict[str, Any]:
         """Get configuration for a specific model."""
         if model_id in self._models:
-            return self._models[model_id]
+            return dict(self._models[model_id])
 
         for key, config in self._models.items():
             if key.startswith(model_id) or model_id.startswith(key):
-                return config
+                return dict(config)
 
         if "unknown" in self._models:
             _LOGGER.warning("Model %s not found, using unknown model config", model_id)

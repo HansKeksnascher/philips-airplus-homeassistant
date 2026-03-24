@@ -144,7 +144,7 @@ class PhilipsAirplusOAuth2Implementation:
         async with session.post(
             self.token_url,
             data=data,
-            auth=aiohttp.BasicAuth(self._client_id or "", OAUTH_CLIENT_SECRET),
+            auth=aiohttp.BasicAuth(self.client_id or "", OAUTH_CLIENT_SECRET),
             headers={
                 "Content-Type": "application/x-www-form-urlencoded",
                 "User-Agent": HTTP_USER_AGENT,

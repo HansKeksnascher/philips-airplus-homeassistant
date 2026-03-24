@@ -425,7 +425,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _get_mode_name(self, mode_value: int) -> str:
         """Get mode name from value."""
-        modes = self._model_config.get("modes", {})
+        modes: dict[str, int] = self._model_config.get("modes", {})
         for name, val in modes.items():
             if val == mode_value:
                 return name
