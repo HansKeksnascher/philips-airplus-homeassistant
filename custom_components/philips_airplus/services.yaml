@@ -1,0 +1,15 @@
+philips_airplus:
+  reset_filter_clean:
+    name: Reset filter clean
+    description: Resets the filter clean timer for a Philips Air+ device.
+    fields:
+      device_uuid:
+        description: The UUID of the device to reset the filter for. If not provided, resets all devices.
+        example: "da-12345678"
+  reset_filter_replace:
+    name: Reset filter replace
+    description: Resets the filter replace timer for a Philips Air+ device.
+    fields:
+      device_uuid:
+        description: The UUID of the device to reset the filter for. If not provided, resets all devices.
+        example: "da-12345678"
