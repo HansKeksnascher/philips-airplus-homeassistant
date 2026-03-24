@@ -1,13 +1,13 @@
 {
   "domain": "philips_airplus",
   "name": "Philips Air+",
-  "version": "0.3.0",
-  "documentation": "https://github.com/ShorMeneses/philips-airplus-homeassistant",
-  "issue_tracker": "https://github.com/ShorMeneses/philips-airplus-homeassistant/issues",
+  "version": "0.4.0",
+  "documentation": "https://github.com/HansKeksnascher/philips-airplus-homeassistant",
+  "issue_tracker": "https://github.com/HansKeksnascher/philips-airplus-homeassistant/issues",
   "homeassistant": "2024.6",
   "dependencies": [],
   "codeowners": [
-    "@ShorMeneses"
+    "@HansKeksnascher"
   ],
   "requirements": [
     "paho-mqtt>=1.6.0"
