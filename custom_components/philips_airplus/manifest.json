@@ -14,5 +14,6 @@
   ],
   "config_flow": true,
   "brand": "Philips",
-  "iot_class": "cloud_push"
-}
+"iot_class": "cloud_push",
+  "icon": "icon.png"
+  }
