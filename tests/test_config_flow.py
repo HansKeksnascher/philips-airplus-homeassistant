@@ -164,6 +164,7 @@ async def test_oauth_flow_shows_form(
 
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "oauth"
+    assert result["description_placeholders"] is not None
     assert "instructions" in result["description_placeholders"]
 
 

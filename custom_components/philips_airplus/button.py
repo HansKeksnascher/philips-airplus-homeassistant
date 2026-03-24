@@ -6,6 +6,7 @@ import logging
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -38,12 +39,13 @@ class _PhilipsAirplusBaseButton(CoordinatorEntity, ButtonEntity):
 
     def __init__(self, coordinator: PhilipsAirplusDataCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
+        self.coordinator: PhilipsAirplusDataCoordinator = coordinator
         self.entry = entry
-        self._attr_device_info = {
+        self._attr_device_info: DeviceInfo = {
             "identifiers": {(DOMAIN, entry.data["device_uuid"])},
             "name": entry.data["device_name"],
             "manufacturer": "Philips",
-            "model": self.coordinator._model_config.get("name", "Air+ Device"),
+            "model": self.coordinator.model_config.get("name", "Air+ Device"),
         }
 
     @property

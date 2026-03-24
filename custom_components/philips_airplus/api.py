@@ -69,7 +69,7 @@ class PhilipsAirplusAPIClient:
                     text = await response.text()
                     raise PhilipsAirplusAPIError(f"HTTP {response.status}: {text}")
 
-                data = await response.json()
+                data: dict[str, Any] = await response.json()
                 _LOGGER.debug("API response from %s: %s", url, data)
                 return data
 
@@ -114,8 +114,8 @@ class PhilipsAirplusAPIClient:
     async def fetch_signature(self) -> str:
         """Fetch MQTT signature."""
         try:
-            data = await self._fetch_json(SIGNATURE_ENDPOINT)
-            signature = data.get("signature")
+            data: dict[str, Any] = await self._fetch_json(SIGNATURE_ENDPOINT)
+            signature: str | None = data.get("signature")
 
             if not signature:
                 raise PhilipsAirplusAPIError("Signature missing in response")
@@ -211,9 +211,10 @@ def extract_user_id_from_token(token: str) -> str | None:
         # Add padding if needed
         padding = "=" * (-len(payload) % 4)
         decoded = base64.urlsafe_b64decode(payload + padding)
-        payload_data = json.loads(decoded)
+        payload_data: dict[str, Any] = json.loads(decoded)
 
-        return payload_data.get("sub")
+        user_id: str | None = payload_data.get("sub")
+        return user_id
     except Exception as ex:
         _LOGGER.debug("Failed to extract user ID from token: %s", ex)
         return None
@@ -231,9 +232,10 @@ def extract_expiration_from_token(token: str) -> int | None:
         payload = parts[1]
         padding = "=" * (-len(payload) % 4)
         decoded = base64.urlsafe_b64decode(payload + padding)
-        payload_data = json.loads(decoded)
+        payload_data: dict[str, Any] = json.loads(decoded)
 
-        return payload_data.get("exp")
+        exp: int | None = payload_data.get("exp")
+        return exp
     except Exception as ex:
         _LOGGER.debug("Failed to extract expiration from token: %s", ex)
         return None

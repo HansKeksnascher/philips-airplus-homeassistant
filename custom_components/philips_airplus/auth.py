@@ -129,7 +129,7 @@ class PhilipsAirplusOAuth2Implementation:
             if response.status != 200:
                 text = await response.text()
                 raise RuntimeError(f"Token request failed: {response.status} - {text}")
-            j = await response.json()
+            j: dict[str, Any] = await response.json()
             return j
 
     async def async_refresh_token(self, refresh_token: str) -> dict:
@@ -154,7 +154,8 @@ class PhilipsAirplusOAuth2Implementation:
                 raise RuntimeError(
                     f"Refresh token request failed: {response.status} - {text}"
                 )
-            return await response.json()
+            token_data: dict[str, Any] = await response.json()
+            return token_data
 
 
 class PhilipsAirplusAuth:
@@ -300,7 +301,7 @@ class PhilipsAirplusAuth:
             _LOGGER.error("Failed to refresh token: %s", ex)
             return False
 
-    async def _fetch_user_id(self) -> str:
+    async def _fetch_user_id(self) -> str | None:
         """Fetch user ID from API."""
         headers = {
             "Authorization": f"Bearer {self.access_token}",
@@ -312,10 +313,11 @@ class PhilipsAirplusAuth:
         async with session.get(USER_SELF_ENDPOINT, headers=headers) as response:
             if response.status != 200:
                 raise RuntimeError(f"Failed to fetch user ID: {response.status}")
-            data = await response.json()
-            return data.get("id")
+            data: dict[str, Any] = await response.json()
+            user_id: str | None = data.get("id")
+            return user_id
 
-    async def _fetch_signature(self) -> str:
+    async def _fetch_signature(self) -> str | None:
         """Fetch signature from API."""
         headers = {
             "Authorization": f"Bearer {self.access_token}",
@@ -327,8 +329,9 @@ class PhilipsAirplusAuth:
         async with session.get(SIGNATURE_ENDPOINT, headers=headers) as response:
             if response.status != 200:
                 raise RuntimeError(f"Failed to fetch signature: {response.status}")
-            data = await response.json()
-            return data.get("signature")
+            data: dict[str, Any] = await response.json()
+            signature: str | None = data.get("signature")
+            return signature
 
     async def close(self) -> None:
         """Close resources."""

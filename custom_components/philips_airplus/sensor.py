@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -14,6 +15,7 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -90,16 +92,17 @@ class PhilipsAirplusSensor(CoordinatorEntity, SensorEntity):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
+        self.coordinator: PhilipsAirplusDataCoordinator = coordinator
         self.entry = entry
         self.entity_description = description
 
         # Use stable unique_id based on device UUID so entity registry matches
         self._attr_unique_id = f"{entry.data['device_uuid']}_{description.key}"
-        self._attr_device_info = {
+        self._attr_device_info: DeviceInfo = {
             "identifiers": {(DOMAIN, entry.data["device_uuid"])},
             "name": entry.data["device_name"],
             "manufacturer": "Philips",
-            "model": self.coordinator._model_config.get("name", "Air+ Device"),
+            "model": self.coordinator.model_config.get("name", "Air+ Device"),
         }
 
     @property
@@ -115,8 +118,9 @@ class PhilipsAirplusSensor(CoordinatorEntity, SensorEntity):
         if key.startswith("filter_"):
             # Filter data from filter_info
             if self.coordinator.data:
-                filter_info = self.coordinator.data.get("filter_info", {})
-                return filter_info.get(key.replace("filter_", ""))
+                filter_info: dict[str, Any] = self.coordinator.data.get("filter_info", {})
+                value: str | int | float | None = filter_info.get(key.replace("filter_", ""))
+                return value
 
         return None
 

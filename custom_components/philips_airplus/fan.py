@@ -11,6 +11,7 @@ from homeassistant.components.fan import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -58,19 +59,20 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
     ) -> None:
         """Initialize the fan."""
         super().__init__(coordinator)
+        self.coordinator: PhilipsAirplusDataCoordinator = coordinator
         self.entry = entry
 
         self._attr_unique_id = f"{entry.data['device_uuid']}_fan"
-        self._attr_device_info = {
+        self._attr_device_info: DeviceInfo = {
             "identifiers": {(DOMAIN, entry.data["device_uuid"])},
             "name": entry.data["device_name"],
             "manufacturer": "Philips",
-            "model": self.coordinator._model_config.get("name", "Air+ Device"),
+            "model": self.coordinator.model_config.get("name", "Air+ Device"),
         }
 
     def _get_device_property(self, property_name: str) -> Any:
         """Get a property value from the device state using the model config mapping."""
-        raw_key = self.coordinator._model_config.get("properties", {}).get(property_name)
+        raw_key = self.coordinator.model_config.get("properties", {}).get(property_name)
         if not raw_key:
             return None
         return self.coordinator.device_state.get(raw_key)
@@ -100,7 +102,8 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
     @property
     def current_speed(self) -> int | None:
         """Return the current speed."""
-        return self._get_device_property(PROP_FAN_SPEED)
+        value: Any = self._get_device_property(PROP_FAN_SPEED)
+        return value if isinstance(value, int) else None
 
     @property
     def speed_count(self) -> int:
@@ -115,7 +118,7 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
             return 0
 
         # Get supported speeds from model config (already ordered by intensity)
-        supported_speeds = self.coordinator._model_config.get("speeds", [])
+        supported_speeds = self.coordinator.model_config.get("speeds", [])
         if not supported_speeds:
             return 0
 
@@ -145,7 +148,7 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
     @property
     def preset_modes(self) -> list[str]:
         """Return the list of available preset modes."""
-        modes = self.coordinator._model_config.get("modes", {})
+        modes = self.coordinator.model_config.get("modes", {})
         return list(modes.keys())
 
     async def async_set_percentage(self, percentage: int) -> None:
@@ -156,7 +159,7 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
             await self.async_turn_off()
             return
 
-        supported_speeds = self.coordinator._model_config.get("speeds", [])
+        supported_speeds = self.coordinator.model_config.get("speeds", [])
         if not supported_speeds:
             _LOGGER.error("No speeds defined for this model")
             return

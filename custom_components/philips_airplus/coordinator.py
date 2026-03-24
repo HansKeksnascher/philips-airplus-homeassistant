@@ -54,9 +54,9 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
         self.entry = entry
-        self._device_id = entry.data[CONF_DEVICE_ID]
-        self._device_name = entry.data[CONF_DEVICE_NAME]
-        self._device_uuid = entry.data[CONF_DEVICE_UUID]
+        self._device_id: str = entry.data[CONF_DEVICE_ID]
+        self._device_name: str = entry.data[CONF_DEVICE_NAME]
+        self._device_uuid: str = entry.data[CONF_DEVICE_UUID]
 
         # Initialize authentication
         self._auth = PhilipsAirplusAuth(
@@ -157,6 +157,11 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def filter_data(self) -> dict[str, Any]:
         """Get filter data."""
         return self._filter_data
+
+    @property
+    def model_config(self) -> dict[str, Any]:
+        """Get model configuration."""
+        return self._model_config
 
     async def _async_setup(self) -> None:
         """Set up the coordinator."""
@@ -474,6 +479,8 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if (
                     self._mqtt_client
                     and self._mqtt_client.access_token != self._auth.access_token
+                    and self._auth.access_token is not None
+                    and self._auth.signature is not None
                 ):
                     _LOGGER.info("Token refreshed, updating MQTT credentials")
                     success = await self._mqtt_client.async_update_credentials(

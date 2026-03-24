@@ -9,8 +9,8 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_ACCESS_TOKEN
-from homeassistant.data_entry_flow import FlowResult
 
 from .api import (
     PhilipsAirplusAPIClient,
@@ -73,14 +73,14 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle the initial step."""
         self._client_id = DEFAULT_CLIENT_ID
         return await self.async_step_oauth()
 
     async def async_step_oauth(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle OAuth authentication."""
         errors: dict[str, str] = {}
 
@@ -229,7 +229,7 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_select_device(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle device selection."""
         if user_input is not None:
             device_index = user_input["device"]
@@ -298,7 +298,7 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_reauth(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle reauthentication."""
         self._reauth_entry = self.hass.config_entries.async_get_entry(
             self.context["entry_id"]
@@ -353,7 +353,7 @@ class PhilipsAirplusOptionsFlowHandler(config_entries.OptionsFlow):
         enable_mqtt: bool,
         auth_code: str = "",
         errors: dict[str, str] | None = None,
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Render options form with current placeholders."""
         if not self._oauth_flow_id or not self._oauth_instructions:
             self._oauth_flow_id = secrets.token_urlsafe(8)
@@ -377,7 +377,7 @@ class PhilipsAirplusOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Manage the options."""
         enable_mqtt = self._entry.options.get(CONF_ENABLE_MQTT, True)
 

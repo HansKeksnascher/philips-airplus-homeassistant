@@ -5,7 +5,7 @@ import logging
 import os
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,17 +43,20 @@ class PhilipsAirplusModelManager:
         """Get configuration for a specific model."""
         # Try exact match
         if model_id in self._models:
-            return self._models[model_id]
+            model_config: dict[str, Any] = self._models[model_id]
+            return model_config
 
         # Try partial match (e.g. AC0650)
         for key, config in self._models.items():
             if key in model_id:
-                return config
+                model_config = config
+                return model_config
 
         # Fallback to default
         if self._default_model and self._default_model in self._models:
             _LOGGER.warning("Model %s not found, using default %s", model_id, self._default_model)
-            return self._models[self._default_model]
+            model_config = self._models[self._default_model]
+            return model_config
 
         _LOGGER.error("Model %s not found and no default available", model_id)
         return {}
@@ -61,12 +64,15 @@ class PhilipsAirplusModelManager:
     def get_mode_value(self, model_id: str, mode_name: str) -> int | None:
         """Get value for a specific mode."""
         config = self.get_model_config(model_id)
-        return config.get("modes", {}).get(mode_name)
+        modes: dict[str, int] = config.get("modes", {})
+        value: int | None = modes.get(mode_name)
+        return value
 
     def get_mode_name(self, model_id: str, mode_value: int) -> str | None:
         """Get name for a specific mode value."""
         config = self.get_model_config(model_id)
-        for name, val in config.get("modes", {}).items():
+        modes: dict[str, int] = config.get("modes", {})
+        for name, val in modes.items():
             if val == mode_value:
                 return name
         return None
