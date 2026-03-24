@@ -166,7 +166,7 @@ class PhilipsAirplusDevice:
 
     def _extract_type(self) -> str:
         """Extract device type."""
-        return self._data.get("type") or self._data.get("deviceType") or "unknown"
+        return self._data.get("type") or self._data.get("deviceType") or self._data.get("ctn") or "unknown"
 
     @property
     def uuid(self) -> str:
