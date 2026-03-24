@@ -25,6 +25,8 @@ ENV/
 .mypy_cache/
 .ruff_cache/
 htmlcov/
+.coverage
+.coverage.*
 
 # Home Assistant
 .home-assistant/
