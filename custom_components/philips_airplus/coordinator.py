@@ -31,7 +31,9 @@ from .const import (
     PORT_STATUS,
     PRESET_MODE_MANUAL,
     PROP_FAN_SPEED,
+    PROP_INDOOR_AIR_INDEX,
     PROP_MODE,
+    PROP_PM25,
     PROP_POWER_FLAG,
     SCAN_INTERVAL,
     TOKEN_REFRESH_BUFFER,
@@ -317,6 +319,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "device_state": self._device_state,
                 "filter_data": self._filter_data,
                 "filter_info": self._get_filter_info() or {},
+                "air_quality_info": self._get_air_quality_info() or {},
                 "connected": self._connected,
                 "last_update": self._last_update,
             }
@@ -387,6 +390,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "device_state": self._device_state,
                 "filter_data": self._filter_data,
                 "filter_info": self._get_filter_info() or {},
+                "air_quality_info": self._get_air_quality_info() or {},
                 "connected": self._connected,
                 "last_update": self._last_update,
             }
@@ -413,6 +417,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "device_state": self._device_state,
                 "filter_data": self._filter_data,
                 "filter_info": filter_info or {},
+                "air_quality_info": self._get_air_quality_info() or {},
                 "connected": self._connected,
                 "last_update": self._last_update,
             }
@@ -474,6 +479,22 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return filter_info if filter_info else None
 
+    def _get_air_quality_info(self) -> dict[str, Any] | None:
+        """Get air quality information."""
+        pm25_prop = self._model_config.get("properties", {}).get(PROP_PM25)
+        iai_prop = self._model_config.get("properties", {}).get(PROP_INDOOR_AIR_INDEX)
+
+        if not pm25_prop or not iai_prop:
+            return None
+
+        pm25 = self._device_state.get(pm25_prop)
+        iai = self._device_state.get(iai_prop)
+
+        if pm25 is None and iai is None:
+            return None
+
+        return {"pm25": pm25, "indoor_air_index": iai}
+
     async def _async_update_data(self) -> dict[str, Any]:
         """Update device data."""
         if not self._mqtt_client or not self._mqtt_client.is_connected():
@@ -514,6 +535,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "device_state": self._device_state,
             "filter_data": self._filter_data,
             "filter_info": self._get_filter_info() or {},
+            "air_quality_info": self._get_air_quality_info() or {},
             "connected": self._connected,
             "last_update": self._last_update,
         }

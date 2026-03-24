@@ -12,6 +12,12 @@
       },
       "filter_clean_hours_remaining": {
         "name": "Filter Cleaning Hours Remaining"
+      },
+      "pm25": {
+        "name": "PM2.5"
+      },
+      "indoor_air_index": {
+        "name": "Indoor Air Index"
       }
     },
     "button": {

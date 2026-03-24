@@ -1,4 +1,5 @@
 """Sensor entities for Philips Air+ integration."""
+
 from __future__ import annotations
 
 import logging
@@ -10,6 +11,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     PERCENTAGE,
     UnitOfTime,
 )
@@ -55,6 +57,17 @@ SENSOR_DESCRIPTIONS: list[SensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         native_unit_of_measurement=UnitOfTime.HOURS,
         icon="mdi:air-filter",
+    ),
+    SensorEntityDescription(
+        key="pm25",
+        translation_key="pm25",
+        native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+        icon="mdi:air-filter",
+    ),
+    SensorEntityDescription(
+        key="indoor_air_index",
+        translation_key="indoor_air_index",
+        icon="mdi:air-humidifier",
     ),
 ]
 
@@ -113,9 +126,20 @@ class PhilipsAirplusSensor(CoordinatorEntity, SensorEntity):
         if key.startswith("filter_"):
             # Filter data from filter_info
             if self.coordinator.data:
-                filter_info: dict[str, Any] = self.coordinator.data.get("filter_info", {})
-                value: str | int | float | None = filter_info.get(key.replace("filter_", ""))
+                filter_info: dict[str, Any] = self.coordinator.data.get(
+                    "filter_info", {}
+                )
+                value: str | int | float | None = filter_info.get(
+                    key.replace("filter_", "")
+                )
                 return value
+
+        if key in ("pm25", "indoor_air_index"):
+            if self.coordinator.data:
+                air_quality: dict[str, Any] = self.coordinator.data.get(
+                    "air_quality_info", {}
+                )
+                return air_quality.get(key)
 
         return None
 

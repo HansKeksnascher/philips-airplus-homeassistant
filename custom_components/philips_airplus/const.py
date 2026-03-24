@@ -86,11 +86,14 @@ class FanSpeed:
         3: "Turbo",
     }
 
+
 # Properties
 PROP_FAN_SPEED = "fan_speed"
 PROP_FAN_SPEED_RAW = "D0310C"
 PROP_MODE = "mode"
 PROP_POWER_FLAG = "power"
+PROP_PM25 = "pm25"
+PROP_INDOOR_AIR_INDEX = "indoor_air_index"
 
 PROP_FILTER_CLEAN_NOMINAL = "filter_clean_nominal"
 PROP_FILTER_CLEAN_REMAINING = "filter_clean_remaining"
