@@ -1,27 +1,21 @@
 # Philips Air+ Home Assistant Integration
 
-This custom integration allows you to control your Philips Air+ AC0650/10 air purifier through Home Assistant. It communicates with the Philips/Versuni cloud service using the same protocol as the official mobile app.
+A custom Home Assistant integration for controlling Philips Air+ air purifiers via the Versuni cloud API. Forked from [ShorMeneses/philips-airplus-homeassistant](https://github.com/ShorMeneses/philips-airplus-homeassistant) with additional device support, sensors, and tooling.
 
 ## Features
 
-- **Fan Control**: Control fan speed (Auto, Sleep, Turbo)
-- **Power Control**: Turn the air purifier on and off
-- **Filter Monitoring**: Monitor filter life for both replace and clean filters
-- **Maintenance Resets**: Reset clean/replace filter timers via buttons or services
-- **Real-time Updates**: Receive real-time status updates via MQTT
-
-## Services
-
-This integration registers two Home Assistant services under the `philips_airplus` domain:
-
-- `philips_airplus.reset_filter_clean`: replicates the official app's "Filter cleaned % reset"
-- `philips_airplus.reset_filter_replace`: replicates the official app's "New/replace filter reset"
-
+- **Fan Control**: Speed control (Auto, Sleep, Turbo)
+- **Power Control**: Turn the air purifier on/off
+- **Filter Monitoring**: Filter life for replace and clean filters (percentage + hours remaining)
+- **Air Quality Sensors**: PM2.5 and Indoor Air Index
+- **Maintenance Resets**: Reset filter timers via buttons
+- **Re-authentication**: Seamless token refresh without removing the integration
+- **MQTT Toggle**: Option to disable cloud connectivity when not needed
 
 ## Supported Devices
 
-- Philips Air+ AC0650/10 (tested)
-- Other Air+ models very unlikely to work!! (Most likely could be easily ported)
+- Philips Air+ AC0650/10
+- Philips Air+ AC0651/10
 
 ## Installation
 
@@ -29,68 +23,85 @@ This integration registers two Home Assistant services under the `philips_airplu
 
 1. Go to HACS > Integrations
 2. Click the three dots menu and select "Custom repositories"
-3. Add repository: `https://github.com/ShorMeneses/philips-airplus-homeassistant`
+3. Add repository: `https://github.com/HansKeksnascher/philips-airplus-homeassistant`
 4. Select "Integration" as category
 5. Click "Add"
-6. Go to HACS > Integrations and search for "Philips Air+"
-7. Click "Install" and restart Home Assistant
+6. Search for "Philips Air+" and install
+7. Restart Home Assistant
 
 ### Manual Installation
 
-1. Copy the `custom_components/philips_airplus` directory to your Home Assistant `config/custom_components` directory
-2. Restart Home Assistant
+Copy the `custom_components/philips_airplus` directory to your Home Assistant `config/custom_components` directory and restart.
 
 ## Configuration
 
 ### Prerequisites
 
-You need a Philips Air+ account with your device already set up in the official mobile app.
+A Philips Air+ account with your device set up in the official app.
 
-### Authentication Methods
+### Authentication
 
-#### Method 1: OAuth PKCE Flow
-0. Video showing how to get the code: `https://www.youtube.com/watch?v=bufBp3h0xos`
-1. In Home Assistant, add/configure the integration and copy the login URL shown in the UI (this is the Philips/Versuni OAuth page, usually under `https://cdc.accounts.home.id/...`).
-2. Open that URL in your browser.
-3. Before logging in, open browser DevTools and switch to the **Network** tab.
-4. Complete login and authorization on the Philips website.
-5. In Network requests, find the redirect request that looks like:
-   `com.philips.air://loginredirect?code=st2.xxxxxxx.sc3&state=xxxx`
-6. Copy only the `code` value (the part between `code=` and `&state`). In this example, copy only: `st2.xxxxxxx.sc3`
-7. Paste that value into Home Assistant as the Authorization Code.
+1. Add the integration in Home Assistant
+2. Copy the OAuth login URL from the UI
+3. Open in browser, complete login
+4. Open DevTools > Network tab
+5. Find redirect request: `com.philips.air://loginredirect?code=xxx...`
+6. Copy the `code` value and paste into Home Assistant
 
-Notes:
-- On desktop browsers, the `com.philips.air://...` request may fail to open because there is no app handler. This is expected; you only need the URL from Network.
-- You can also paste the full redirect URL; the integration will extract the `code` value automatically.
-- If the token expires later, open **Integration -> Configure** and paste a new authorization code in the optional re-auth field (no need to remove/re-add the integration).
+See the [YouTube walkthrough](https://www.youtube.com/watch?v=bufBp3h0xos) for visual guide.
+
+### Re-authentication
+
+If your token expires, go to **Integration > Configure** and paste a new authorization code. No need to remove/re-add.
+
+## Entities
+
+### Fan
+- `air_purifier` - Main fan control
+
+### Sensors
+- `pm25` - PM2.5 air quality measurement
+- `indoor_air_index` - Indoor Air Index
+- `filter_replacement` - Filter replacement life %
+- `filter_replacement_hours` - Hours until filter replacement
+- `filter_cleaning` - Filter cleaning life %
+- `filter_cleaning_hours` - Hours until filter cleaning
+
+### Buttons
+- `reset_filter_cleaning` - Reset filter cleaning timer
+- `reset_filter_replacement` - Reset filter replacement timer
 
 ## Development
 
-This integration is based on reverse-engineering the Philips Air+ mobile app protocol.
+Built with Home Assistant 2024.6+ patterns and type hints throughout.
+
+### Tooling
+- **Testing**: pytest with `pytest-homeassistant-custom-component`
+- **Type checking**: mypy
+- **Linting**: ruff
+- **Pre-commit hooks**: configured for quality gates
+
+### Running Tests
+```bash
+source .venv/bin/activate
+pytest tests/
+```
+
+### Type Checking & Linting
+```bash
+ruff check custom_components/
+mypy custom_components/
+```
 
 ## Limitations
 
-- Only tested with AC0650/10 model
-- Requires internet connectivity (cloud-dependent)
-
-## License
-
-This integration is released under the MIT License. See LICENSE file for details.
+- Cloud-dependent (requires internet connectivity)
+- Only tested with AC0650/10 and AC0651/10 models
 
 ## Disclaimer
 
-This integration is not affiliated with or endorsed by Philips or Versuni. It is a third-party implementation based on reverse-engineering their API. Use at your own risk.
+Third-party implementation based on reverse-engineering the Philips/Versuni API. Not affiliated with Philips or Versuni.
 
-## Support
+## License
 
-- **Issues**: Report bugs and feature requests on GitHub
-
-### Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+MIT License - See LICENSE file.
