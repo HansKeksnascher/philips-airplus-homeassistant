@@ -7,6 +7,8 @@ import logging
 from typing import Any
 
 import aiohttp
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     API_BASE_URL,
@@ -29,21 +31,14 @@ class PhilipsAirplusAuthError(PhilipsAirplusAPIError):
 class PhilipsAirplusAPIClient:
     """API client for Philips Air+."""
 
-    def __init__(self, access_token: str) -> None:
+    def __init__(self, hass: HomeAssistant, access_token: str) -> None:
         """Initialize API client."""
+        self.hass = hass
         self.access_token = access_token
-        self._session: aiohttp.ClientSession | None = None
 
     def _get_session(self) -> aiohttp.ClientSession:
-        """Get or create HTTP session."""
-        if self._session is None or self._session.closed:
-            self._session = aiohttp.ClientSession()
-        return self._session
-
-    async def close(self) -> None:
-        """Close HTTP session."""
-        if self._session and not self._session.closed:
-            await self._session.close()
+        """Get HA's shared HTTP session."""
+        return async_get_clientsession(self.hass)
 
     def _get_headers(self) -> dict[str, str]:
         """Get request headers."""

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import secrets
-from datetime import datetime, timedelta
 from typing import Any
 
 import voluptuous as vol
@@ -18,7 +17,11 @@ from .api import (
     PhilipsAirplusAuthError,
     PhilipsAirplusDevice,
 )
-from .auth import PhilipsAirplusAuth, PhilipsAirplusOAuth2Implementation
+from .auth import (
+    PhilipsAirplusAuth,
+    PhilipsAirplusOAuth2Implementation,
+    parse_token_response,
+)
 from .const import (
     AUTH_MODE_OAUTH,
     CONF_AUTH_MODE,
@@ -137,23 +140,12 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # typ
             token_data = await impl.async_request_token(
                 auth_code, getattr(self, "_oauth_flow_id", "")
             )
-            access_token = token_data.get("access_token") or token_data.get(
-                "accessToken"
+            parsed = parse_token_response(token_data)
+            access_token = parsed["access_token"]
+            refresh_token = parsed["refresh_token"]
+            token_expires_at = (
+                int(parsed["expires_at"].timestamp()) if parsed["expires_at"] else None
             )
-            refresh_token = token_data.get("refresh_token") or token_data.get(
-                "refreshToken"
-            )
-
-            # Extract token expiration (exp claim or expires_in)
-            token_expires_at = None
-            exp = token_data.get("exp")
-            expires_in = token_data.get("expires_in")
-            if exp:
-                token_expires_at = int(exp)
-            elif expires_in:
-                token_expires_at = int(
-                    (datetime.now() + timedelta(seconds=int(expires_in))).timestamp()
-                )
 
             if not access_token:
                 _LOGGER.error(
@@ -170,9 +162,8 @@ class PhilipsAirplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # typ
                 )
 
             # Validate token by listing devices
-            api_client = PhilipsAirplusAPIClient(access_token)
+            api_client = PhilipsAirplusAPIClient(self.hass, access_token)
             devices_data = await api_client.list_devices()
-            await api_client.close()
 
             self._access_token = access_token
             self._refresh_token = refresh_token
@@ -405,23 +396,12 @@ class PhilipsAirplusOptionsFlowHandler(config_entries.OptionsFlow):
                     auth_code, self._oauth_flow_id
                 )
 
-                access_token = token_data.get("access_token") or token_data.get(
-                    "accessToken"
+                parsed = parse_token_response(token_data)
+                access_token = parsed["access_token"]
+                refresh_token = parsed["refresh_token"]
+                token_expires_at = (
+                    int(parsed["expires_at"].timestamp()) if parsed["expires_at"] else None
                 )
-                refresh_token = token_data.get("refresh_token") or token_data.get(
-                    "refreshToken"
-                )
-                exp = token_data.get("exp")
-                expires_in = token_data.get("expires_in")
-                token_expires_at = None
-                if exp:
-                    token_expires_at = int(exp)
-                elif expires_in:
-                    token_expires_at = int(
-                        (
-                            datetime.now() + timedelta(seconds=int(expires_in))
-                        ).timestamp()
-                    )
 
                 if not access_token:
                     _LOGGER.error(

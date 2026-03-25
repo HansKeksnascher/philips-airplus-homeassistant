@@ -31,6 +31,29 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+def parse_token_response(token_data: dict[str, Any]) -> dict[str, Any]:
+    """Extract token fields from response, handling camelCase and snake_case variants.
+
+    Returns dict with keys: access_token, refresh_token, expires_at
+    """
+    access_token = token_data.get("access_token") or token_data.get("accessToken")
+    refresh_token = token_data.get("refresh_token") or token_data.get("refreshToken")
+
+    expires_at = None
+    exp = token_data.get("exp") or token_data.get("expIn")
+    expires_in = token_data.get("expires_in") or token_data.get("expiresIn")
+    if exp is not None:
+        expires_at = datetime.fromtimestamp(int(exp))
+    elif expires_in is not None:
+        expires_at = datetime.now() + timedelta(seconds=int(expires_in))
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "expires_at": expires_at,
+    }
+
+
 class AuthenticationExpired(Exception):
     """Raised when authentication has expired and reauth is required."""
 
@@ -227,28 +250,15 @@ class PhilipsAirplusAuth:
             )
             token_data = await impl.async_refresh_token(self.refresh_token)
 
-            self.access_token = token_data.get("access_token") or token_data.get(
-                "accessToken"
-            )
-            new_refresh = token_data.get("refresh_token") or token_data.get(
-                "refreshToken"
-            )
-            if new_refresh:
-                self.refresh_token = new_refresh
+            parsed = parse_token_response(token_data)
+            self.access_token = parsed["access_token"]
+            if parsed["refresh_token"]:
+                self.refresh_token = parsed["refresh_token"]
+            self.expires_at = parsed["expires_at"]
 
-            # Check for 'exp' (timestamp) first, then 'expires_in' (duration)
-            exp = token_data.get("exp")
-            expires_in = token_data.get("expires_in")
-
-            if exp:
-                self.expires_at = datetime.fromtimestamp(int(exp))
+            if self.expires_at:
                 _LOGGER.debug(
-                    "Token refreshed, expires at (from exp): %s", self.expires_at
-                )
-            elif expires_in:
-                self.expires_at = datetime.now() + timedelta(seconds=int(expires_in))
-                _LOGGER.debug(
-                    "Token refreshed, expires at (from expires_in): %s", self.expires_at
+                    "Token refreshed, expires at: %s", self.expires_at
                 )
 
             # After refreshing token, fetch new signature

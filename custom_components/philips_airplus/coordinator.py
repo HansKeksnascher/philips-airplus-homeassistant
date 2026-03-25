@@ -86,7 +86,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self._auth.expires_at = None
 
         # Initialize API client
-        self._api_client = PhilipsAirplusAPIClient(self._auth.access_token or "")
+        self._api_client = PhilipsAirplusAPIClient(hass, self._auth.access_token or "")
 
         # Initialize Model Manager (models are loaded asynchronously during setup)
         component_path = os.path.dirname(__file__)
@@ -210,7 +210,7 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
 
             # Update API client with potentially refreshed token
-            self._api_client = PhilipsAirplusAPIClient(self._auth.access_token or "")
+            self._api_client = PhilipsAirplusAPIClient(self.hass, self._auth.access_token or "")
 
             # Build client ID for MQTT
             client_id = build_client_id(self._auth.user_id or "", self._device_uuid)
@@ -673,9 +673,6 @@ class PhilipsAirplusDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         if self._auth:
             await self._auth.close()
-
-        if self._api_client:
-            await self._api_client.close()
 
     async def async_setup(self) -> None:
         """Set up the coordinator."""
