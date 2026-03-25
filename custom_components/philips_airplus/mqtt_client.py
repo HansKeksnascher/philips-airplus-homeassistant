@@ -180,12 +180,12 @@ class PhilipsAirplusMQTTClient:
             self._last_disconnect_rc = rc
             try:
                 client.loop_stop()
-            except Exception:
-                pass
+            except Exception as ex:
+                _LOGGER.debug("Ignoring loop_stop error during disconnect: %s", ex)
             try:
                 client.disconnect()
-            except Exception:
-                pass
+            except Exception as ex:
+                _LOGGER.debug("Ignoring disconnect error during disconnect: %s", ex)
             self._client = None
 
         if self._connection_callback and not self._refreshing_credentials:
@@ -268,12 +268,12 @@ class PhilipsAirplusMQTTClient:
         if self._client:
             try:
                 self._client.loop_stop()
-            except Exception:
-                pass
+            except Exception as ex:
+                _LOGGER.debug("Ignoring loop_stop error in cleanup: %s", ex)
             try:
                 self._client.disconnect()
-            except Exception:
-                pass
+            except Exception as ex:
+                _LOGGER.debug("Ignoring disconnect error in cleanup: %s", ex)
             self._client = None
         self._connection_state = "disconnected"
         self._connect_result = False
@@ -378,8 +378,8 @@ class PhilipsAirplusMQTTClient:
 
         try:
             self.request_port_status(PORT_STATUS)
-        except Exception:
-            pass
+        except Exception as ex:
+            _LOGGER.debug("Ignoring status request error after set_fan_speed: %s", ex)
 
         return res
 
@@ -396,8 +396,8 @@ class PhilipsAirplusMQTTClient:
 
         try:
             self.request_port_status(PORT_STATUS)
-        except Exception:
-            pass
+        except Exception as ex:
+            _LOGGER.debug("Ignoring status request error after set_mode: %s", ex)
 
         return success
 
@@ -445,12 +445,12 @@ class PhilipsAirplusMQTTClient:
 
         try:
             self.request_port_status(PORT_FILTER_READ)
-        except Exception:
-            pass
+        except Exception as ex:
+            _LOGGER.debug("Ignoring filter status request error after reset_filter_clean: %s", ex)
         try:
             self.request_port_status(PORT_STATUS)
-        except Exception:
-            pass
+        except Exception as ex:
+            _LOGGER.debug("Ignoring status request error after reset_filter_clean: %s", ex)
 
         return success
 
@@ -474,12 +474,12 @@ class PhilipsAirplusMQTTClient:
 
         try:
             self.request_port_status(PORT_FILTER_READ)
-        except Exception:
-            pass
+        except Exception as ex:
+            _LOGGER.debug("Ignoring filter status request error after reset_filter_replace: %s", ex)
         try:
             self.request_port_status(PORT_STATUS)
-        except Exception:
-            pass
+        except Exception as ex:
+            _LOGGER.debug("Ignoring status request error after reset_filter_replace: %s", ex)
 
         return success
 

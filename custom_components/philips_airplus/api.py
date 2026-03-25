@@ -79,61 +79,42 @@ class PhilipsAirplusAPIClient:
 
     async def list_devices(self) -> list[dict[str, Any]]:
         """List all devices associated with the account."""
-        try:
-            data = await self._fetch_json(DEVICE_ENDPOINT)
-            devices = []
+        data = await self._fetch_json(DEVICE_ENDPOINT)
+        devices = []
 
-            if isinstance(data, dict):
-                if isinstance(data.get("devices"), list):
-                    devices = data["devices"]
-                else:
-                    # Fallback: locate any list with uuid entries
-                    for key, value in data.items():
-                        if isinstance(value, list) and any(
-                            isinstance(item, dict) and item.get("uuid")
-                            for item in value
-                        ):
-                            devices = value
-                            break
-            elif isinstance(data, list):
-                devices = data
+        if isinstance(data, dict):
+            if isinstance(data.get("devices"), list):
+                devices = data["devices"]
+            else:
+                for key, value in data.items():
+                    if isinstance(value, list) and any(
+                        isinstance(item, dict) and item.get("uuid")
+                        for item in value
+                    ):
+                        devices = value
+                        break
+        elif isinstance(data, list):
+            devices = data
 
-            _LOGGER.debug("Found %d devices", len(devices))
-            return devices
-
-        except PhilipsAirplusAPIError:
-            raise
-        except Exception as ex:
-            raise PhilipsAirplusAPIError(f"Failed to list devices: {ex}") from ex
+        _LOGGER.debug("Found %d devices", len(devices))
+        return devices
 
     async def fetch_signature(self) -> str:
         """Fetch MQTT signature."""
-        try:
-            data: dict[str, Any] = await self._fetch_json(SIGNATURE_ENDPOINT)
-            signature: str | None = data.get("signature")
+        data: dict[str, Any] = await self._fetch_json(SIGNATURE_ENDPOINT)
+        signature: str | None = data.get("signature")
 
-            if not signature:
-                raise PhilipsAirplusAPIError("Signature missing in response")
+        if not signature:
+            raise PhilipsAirplusAPIError("Signature missing in response")
 
-            _LOGGER.debug("Successfully fetched MQTT signature")
-            return signature
-
-        except PhilipsAirplusAPIError:
-            raise
-        except Exception as ex:
-            raise PhilipsAirplusAPIError(f"Failed to fetch signature: {ex}") from ex
+        _LOGGER.debug("Successfully fetched MQTT signature")
+        return signature
 
     async def get_user_info(self) -> dict[str, Any]:
         """Get user information."""
-        try:
-            user_endpoint = f"{API_BASE_URL}/da/user/self"
-            data = await self._fetch_json(user_endpoint)
-            return data
-
-        except PhilipsAirplusAPIError:
-            raise
-        except Exception as ex:
-            raise PhilipsAirplusAPIError(f"Failed to get user info: {ex}") from ex
+        user_endpoint = f"{API_BASE_URL}/da/user/self"
+        data = await self._fetch_json(user_endpoint)
+        return data
 
 
 class PhilipsAirplusDevice:

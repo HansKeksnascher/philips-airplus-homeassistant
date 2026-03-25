@@ -199,14 +199,14 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
         if "percentage" in kwargs:
             try:
                 await self.coordinator.set_power(True)
-            except Exception:
-                _LOGGER.debug("Failed to call set_power before setting percentage")
+            except Exception as ex:
+                _LOGGER.debug("set_power failed before setting percentage: %s", ex)
             await self.async_set_percentage(kwargs["percentage"])
         else:
             try:
                 await self.coordinator.set_power(True)
-            except Exception:
-                _LOGGER.debug("Failed to call set_power before turning on")
+            except Exception as ex:
+                _LOGGER.debug("set_power failed before turning on: %s", ex)
 
     async def async_turn_off(self, *args: Any, **kwargs: Any) -> None:
         """Turn off the fan."""
