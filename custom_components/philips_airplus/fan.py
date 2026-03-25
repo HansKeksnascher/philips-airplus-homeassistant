@@ -71,6 +71,11 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
             "model": self.coordinator.model_config.get("name", "Air+ Device"),
         }
 
+    async def async_added_to_hass(self) -> None:
+        """Handle entity being added to HomeAssistant."""
+        await super().async_added_to_hass()
+        await self.coordinator.async_request_refresh()
+
     def _get_device_property(self, property_name: str) -> Any:
         """Get a property value from the device state using the model config mapping."""
         raw_key = self.coordinator.model_config.get("properties", {}).get(property_name)
@@ -84,7 +89,7 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
         return self.coordinator.is_connected
 
     @property
-    def is_on(self) -> bool:
+    def is_on(self) -> bool | None:
         """Return True if the fan is on."""
         power_on = self.coordinator.shadow_state.get("powerOn")
         if power_on is not None:
@@ -95,7 +100,7 @@ class PhilipsAirplusFan(CoordinatorEntity, FanEntity):
             return False
 
         mode = self._get_device_property(PROP_MODE)
-        return mode is not None
+        return mode if mode is not None else None
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
