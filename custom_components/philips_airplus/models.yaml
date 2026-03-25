@@ -35,5 +35,5 @@ models:
       filter_replace_remaining: "D0540E"
       filter_clean_nominal: "D05207"
       filter_clean_remaining: "D0520D"
-      pm25: "D03105"
+      pm25: "D03221"
       indoor_air_index: "D03120"
